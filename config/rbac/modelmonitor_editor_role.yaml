@@ -1,0 +1,24 @@
+# permissions for end users to edit modelmonitors.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: modelmonitor-editor-role
+rules:
+- apiGroups:
+  - monitoring.hops.io
+  resources:
+  - modelmonitors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.hops.io
+  resources:
+  - modelmonitors/status
+  verbs:
+  - get

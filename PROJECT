@@ -1,0 +1,7 @@
+domain: hops.io
+repo: model-monitoring-operator
+resources:
+- group: monitoring
+  kind: ModelMonitor
+  version: v1beta1
+version: "2"

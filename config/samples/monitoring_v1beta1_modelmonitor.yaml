@@ -1,0 +1,7 @@
+apiVersion: monitoring.hops.io/v1beta1
+kind: ModelMonitor
+metadata:
+  name: modelmonitor-sample
+spec:
+  # Add fields here
+  foo: bar
