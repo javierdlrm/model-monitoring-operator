@@ -26,7 +26,7 @@ data:
   #       { "name": "jensen-shannon", threshold: 0.5, showAll: true }
   #     ]
   #   }
-  inferenceadapter: |-
+  inferencelogger: |-
     {
-      "containerimage": "javierdlrm/inference-adapter:v1"
+      "containerimage": "javierdlrm/inference-logger:v1beta1"
     }

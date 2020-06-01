@@ -26,37 +26,37 @@ import (
 	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
 )
 
-// InferenceAdapterReconciler defines a reconciler for InferenceAdapter
-type InferenceAdapterReconciler struct {
+// InferenceLoggerReconciler defines a reconciler for InferenceLogger
+type InferenceLoggerReconciler struct {
 	Client   client.Client
 	Scheme   *runtime.Scheme
 	Log      logr.Logger
 	Recorder record.EventRecorder
-	Builder  *resources.InferenceAdapterBuilder
+	Builder  *resources.InferenceLoggerBuilder
 }
 
-// NewInferenceAdapterReconciler creates a new reconciler for InferenceAdapter
-func NewInferenceAdapterReconciler(client client.Client, scheme *runtime.Scheme, log logr.Logger, recorder record.EventRecorder,
-	config *corev1.ConfigMap) *InferenceAdapterReconciler {
+// NewInferenceLoggerReconciler creates a new reconciler for InferenceLogger
+func NewInferenceLoggerReconciler(client client.Client, scheme *runtime.Scheme, log logr.Logger, recorder record.EventRecorder,
+	config *corev1.ConfigMap) *InferenceLoggerReconciler {
 
-	return &InferenceAdapterReconciler{
+	return &InferenceLoggerReconciler{
 		Client:   client,
 		Scheme:   scheme,
 		Log:      log,
 		Recorder: recorder,
-		Builder:  resources.NewInferenceAdapterBuilder(client, config),
+		Builder:  resources.NewInferenceLoggerBuilder(client, config),
 	}
 }
 
 // Reconcile a given ModelMonitor declarative config
-func (r *InferenceAdapterReconciler) Reconcile(modelMonitor *monitoringv1beta1.ModelMonitor) error {
-	log := r.Log.WithValues("inferenceadapter", modelMonitor.Namespace+"/"+modelMonitor.Name)
+func (r *InferenceLoggerReconciler) Reconcile(modelMonitor *monitoringv1beta1.ModelMonitor) error {
+	log := r.Log.WithValues("inferencelogger", modelMonitor.Namespace+"/"+modelMonitor.Name)
 
-	serviceName := constants.DefaultInferenceAdapterName(modelMonitor.Name)
+	serviceName := constants.DefaultInferenceLoggerName(modelMonitor.Name)
 
 	var service *knservingv1.Service
 	var err error
-	service, err = r.Builder.CreateInferenceAdapterService(serviceName, modelMonitor)
+	service, err = r.Builder.CreateInferenceLoggerService(serviceName, modelMonitor)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (r *InferenceAdapterReconciler) Reconcile(modelMonitor *monitoringv1beta1.M
 	return nil
 }
 
-func (r *InferenceAdapterReconciler) finalizeService(serviceName string, namespace string, log logr.Logger) error {
+func (r *InferenceLoggerReconciler) finalizeService(serviceName string, namespace string, log logr.Logger) error {
 	existing := &knservingv1.Service{}
 	if err := r.Client.Get(context.TODO(), types.NamespacedName{Name: serviceName, Namespace: namespace}, existing); err != nil {
 		if !errors.IsNotFound(err) {
@@ -96,7 +96,7 @@ func (r *InferenceAdapterReconciler) finalizeService(serviceName string, namespa
 	return nil
 }
 
-func (r *InferenceAdapterReconciler) reconcileService(modelMonitor *monitoringv1beta1.ModelMonitor, desired *knservingv1.Service,
+func (r *InferenceLoggerReconciler) reconcileService(modelMonitor *monitoringv1beta1.ModelMonitor, desired *knservingv1.Service,
 	log logr.Logger) (*knservingv1.ServiceStatus, error) {
 
 	// Set ModelMonitor as owner of desired service

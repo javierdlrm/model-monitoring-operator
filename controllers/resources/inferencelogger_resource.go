@@ -23,40 +23,40 @@ var serviceAnnotationDisallowedList = []string{
 	"kubectl.kubernetes.io/last-applied-configuration",
 }
 
-// InferenceAdapterBuilder defines the builder for InferenceAdapter
-type InferenceAdapterBuilder struct {
+// InferenceLoggerBuilder defines the builder for InferenceLogger
+type InferenceLoggerBuilder struct {
 	ModelMonitorConfig *monitoringv1beta1.ModelMonitorConfig
 }
 
-// NewInferenceAdapterBuilder creates an InferenceAdapter builder
-func NewInferenceAdapterBuilder(client client.Client, config *corev1.ConfigMap) *InferenceAdapterBuilder {
+// NewInferenceLoggerBuilder creates an InferenceLogger builder
+func NewInferenceLoggerBuilder(client client.Client, config *corev1.ConfigMap) *InferenceLoggerBuilder {
 	modelMonitorConfig, err := monitoringv1beta1.NewModelMonitorConfig(config)
 	if err != nil {
 		fmt.Printf("Failed to get model monitor config %s", err)
 		panic("Failed to get model monitor config")
 	}
-	return &InferenceAdapterBuilder{
+	return &InferenceLoggerBuilder{
 		ModelMonitorConfig: modelMonitorConfig,
 	}
 }
 
-// CreateInferenceAdapterService creates the Knative Service for InferenceAdapter
-func (b *InferenceAdapterBuilder) CreateInferenceAdapterService(serviceName string, modelMonitor *monitoringv1beta1.ModelMonitor) (*knservingv1.Service, error) {
+// CreateInferenceLoggerService creates the Knative Service for InferenceLogger
+func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string, modelMonitor *monitoringv1beta1.ModelMonitor) (*knservingv1.Service, error) {
 
 	// Specs
 	metadata := modelMonitor.ObjectMeta
 	modelSpec := &modelMonitor.Spec.Model
-	inferenceAdapterSpec := &modelMonitor.Spec.InferenceAdapter
+	inferenceLoggerSpec := &modelMonitor.Spec.InferenceLogger
 	kafkaSpec := &modelMonitor.Spec.Kafka
 
 	// Annotations
-	annotations, err := b.buildAnnotations(metadata, inferenceAdapterSpec.MinReplicas, inferenceAdapterSpec.MaxReplicas, inferenceAdapterSpec.Parallelism)
+	annotations, err := b.buildAnnotations(metadata, inferenceLoggerSpec.MinReplicas, inferenceLoggerSpec.MaxReplicas, inferenceLoggerSpec.Parallelism)
 	if err != nil {
 		return nil, err
 	}
 
 	// Concurrency
-	concurrency := int64(inferenceAdapterSpec.Parallelism)
+	concurrency := int64(inferenceLoggerSpec.Parallelism)
 
 	// Knative Service
 	service := &knservingv1.Service{
@@ -70,26 +70,26 @@ func (b *InferenceAdapterBuilder) CreateInferenceAdapterService(serviceName stri
 				Template: knservingv1.RevisionTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: utils.Union(metadata.Labels, map[string]string{
-							constants.InferenceAdapterModelLabel: metadata.Name,
+							constants.InferenceLoggerModelLabel: metadata.Name,
 						}),
 						Annotations: annotations,
 					},
 					Spec: knservingv1.RevisionSpec{
-						TimeoutSeconds:       &constants.DefaultInferenceAdapterTimeout,
+						TimeoutSeconds:       &constants.DefaultInferenceLoggerTimeout,
 						ContainerConcurrency: &concurrency,
 						PodSpec: corev1.PodSpec{
 							Containers: []corev1.Container{
 								corev1.Container{
-									Image:           b.ModelMonitorConfig.InferenceAdapter.ContainerImage,
+									Image:           b.ModelMonitorConfig.InferenceLogger.ContainerImage,
 									Name:            constants.ModelMonitorContainerName,
 									ImagePullPolicy: corev1.PullAlways,
 									Env: []corev1.EnvVar{
 										corev1.EnvVar{
-											Name:  constants.InferenceAdapterEnvKafkaTopicLabel,
+											Name:  constants.InferenceLoggerEnvKafkaTopicLabel,
 											Value: constants.DefaultKafkaTopicName(modelSpec.Name),
 										},
 										corev1.EnvVar{
-											Name:  constants.InferenceAdapterEnvKafkaBrokersLabel,
+											Name:  constants.InferenceLoggerEnvKafkaBrokersLabel,
 											Value: kafkaSpec.Brokers,
 										},
 									},
@@ -113,7 +113,7 @@ func (b *InferenceAdapterBuilder) CreateInferenceAdapterService(serviceName stri
 	return service, nil
 }
 
-func (b *InferenceAdapterBuilder) buildAnnotations(metadata metav1.ObjectMeta, minReplicas int, maxReplicas int, parallelism int) (map[string]string, error) {
+func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, minReplicas int, maxReplicas int, parallelism int) (map[string]string, error) {
 
 	annotations := utils.Filter(metadata.Annotations, func(key string) bool {
 		return !utils.Includes(serviceAnnotationDisallowedList, key)

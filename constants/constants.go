@@ -18,11 +18,11 @@ var (
 
 // ModelMonitor Controller Constants
 var (
-	ModelMonitorControllerName           = ModelMonitorName + "-controller"
-	ControllerLabelName                  = ModelMonitorControllerName + "-manager"
-	DefaultInferenceAdapterTimeout int64 = 300
-	DefaultScalingTarget                 = "1"
-	DefaultMinReplicas                   = 1
+	ModelMonitorControllerName          = ModelMonitorName + "-controller"
+	ControllerLabelName                 = ModelMonitorControllerName + "-manager"
+	DefaultInferenceLoggerTimeout int64 = 300
+	DefaultScalingTarget                = "1"
+	DefaultMinReplicas                  = 1
 )
 
 // ModelMonitorComponent enum
@@ -30,17 +30,17 @@ type ModelMonitorComponent string
 
 // ModelMonitor fields
 const (
-	Model            ModelMonitorComponent = "model"
-	Monitoring       ModelMonitorComponent = "monitoring"
-	InferenceAdapter ModelMonitorComponent = "inferenceadapter"
-	KafkaTopic       ModelMonitorComponent = "kafkatopic"
+	Model           ModelMonitorComponent = "model"
+	Monitoring      ModelMonitorComponent = "monitoring"
+	InferenceLogger ModelMonitorComponent = "inferencelogger"
+	KafkaTopic      ModelMonitorComponent = "kafkatopic"
 )
 
-// InferenceAdapter constants
+// InferenceLogger constants
 const (
-	InferenceAdapterModelLabel           = "model"
-	InferenceAdapterEnvKafkaTopicLabel   = "KAFKA_TOPIC"
-	InferenceAdapterEnvKafkaBrokersLabel = "KAFKA_BROKERS"
+	InferenceLoggerModelLabel           = "model"
+	InferenceLoggerEnvKafkaTopicLabel   = "KAFKA_TOPIC"
+	InferenceLoggerEnvKafkaBrokersLabel = "KAFKA_BROKERS"
 )
 
 // KafkaTopic constants
@@ -49,9 +49,9 @@ const (
 	KafkaBrokersLabel = "brokers"
 )
 
-// DefaultInferenceAdapterName builds a default name
-func DefaultInferenceAdapterName(prefix string) string {
-	return prefix + "-" + InferenceAdapter.String()
+// DefaultInferenceLoggerName builds a default name
+func DefaultInferenceLoggerName(prefix string) string {
+	return prefix + "-" + InferenceLogger.String()
 }
 
 // DefaultKafkaTopicName build a default Kafka Topic name

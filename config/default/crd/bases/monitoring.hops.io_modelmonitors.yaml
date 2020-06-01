@@ -38,8 +38,8 @@ spec:
         spec:
           description: ModelMonitorSpec defines the desired state of ModelMonitor
           properties:
-            inferenceadapter:
-              description: InferenceAdapterSpec defines the configuration for InferenceAdapter
+            inferencelogger:
+              description: InferenceLoggerSpec defines the configuration for InferenceLogger
                 Knative Service.
               properties:
                 maxReplicas:
@@ -54,6 +54,8 @@ spec:
               properties:
                 brokers:
                   type: string
+                topic:
+                  type: string
               required:
               - brokers
               type: object
@@ -65,10 +67,22 @@ spec:
                   type: string
                 name:
                   type: string
+                schema:
+                  description: ModelSchemaSpec defines the inference schema of a model
+                  properties:
+                    request:
+                      type: string
+                    response:
+                      type: string
+                  required:
+                  - request
+                  - response
+                  type: object
                 version:
                   type: integer
               required:
               - name
+              - schema
               type: object
             monitoring:
               description: MonitoringSpec defines the Monitoring settings

@@ -16,8 +16,8 @@ import (
 // ModelMonitorConfig defines the ModelMonitor configuration
 // +k8s:openapi-gen=false
 type ModelMonitorConfig struct {
-	Monitoring       *MonitoringConfig       `json:"monitoring"`
-	InferenceAdapter *InferenceAdapterConfig `json:"inferenceadapter"`
+	Monitoring      *MonitoringConfig      `json:"monitoring"`
+	InferenceLogger *InferenceLoggerConfig `json:"inferencelogger"`
 }
 
 // MonitoringConfig defines the Monitoring configuration
@@ -50,9 +50,9 @@ type DriftConfig struct {
 	ShowAll   bool              `json:"showall"`
 }
 
-// InferenceAdapterConfig defines the configuration for the InferenceAdapter service
+// InferenceLoggerConfig defines the configuration for the InferenceLogger service
 // +k8s:openapi-gen=false
-type InferenceAdapterConfig struct {
+type InferenceLoggerConfig struct {
 	ContainerImage string `json:"containerimage"`
 }
 
@@ -79,14 +79,14 @@ func NewModelMonitorConfig(configMap *corev1.ConfigMap) (*ModelMonitorConfig, er
 		return nil, err
 	}
 
-	inferenceAdapterConfig, err := getInferenceAdapterConfig(configMap)
+	inferenceLoggerConfig, err := getInferenceLoggerConfig(configMap)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ModelMonitorConfig{
-		Monitoring:       monitoringConfig,
-		InferenceAdapter: inferenceAdapterConfig,
+		Monitoring:      monitoringConfig,
+		InferenceLogger: inferenceLoggerConfig,
 	}, nil
 }
 
@@ -103,15 +103,15 @@ func getMonitoringConfig(configMap *corev1.ConfigMap) (*MonitoringConfig, error)
 	return monitoringConfig, nil
 }
 
-func getInferenceAdapterConfig(configMap *corev1.ConfigMap) (*InferenceAdapterConfig, error) {
-	inferenceAdapterConfig := &InferenceAdapterConfig{}
-	key := constants.InferenceAdapter.String()
+func getInferenceLoggerConfig(configMap *corev1.ConfigMap) (*InferenceLoggerConfig, error) {
+	inferenceLoggerConfig := &InferenceLoggerConfig{}
+	key := constants.InferenceLogger.String()
 
 	if data, ok := configMap.Data[key]; ok {
-		err := json.Unmarshal([]byte(data), &inferenceAdapterConfig)
+		err := json.Unmarshal([]byte(data), &inferenceLoggerConfig)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to unmarshall %v json string due to %v ", key, err)
 		}
 	}
-	return inferenceAdapterConfig, nil
+	return inferenceLoggerConfig, nil
 }

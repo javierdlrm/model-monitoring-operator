@@ -28,7 +28,7 @@ type ModelMonitorSpec struct {
 	//+optional
 	Monitoring MonitoringSpec `json:"monitoring"`
 	//+optional
-	InferenceAdapter InferenceAdapterSpec `json:"inferenceadapter"`
+	InferenceLogger InferenceLoggerSpec `json:"inferencelogger"`
 	//+required
 	Kafka KafkaSpec `json:"kafka"`
 }
@@ -41,6 +41,16 @@ type ModelSpec struct {
 	ID string `json:"id,omitempty"`
 	//+optional
 	Version int `json:"version,omitempty"`
+	//+required
+	Schema ModelSchemaSpec `json:"schema"`
+}
+
+// ModelSchemaSpec defines the inference schema of a model
+type ModelSchemaSpec struct {
+	//+required
+	Request string `json:"request"`
+	//+required
+	Response string `json:"response"`
 }
 
 // MonitoringSpec defines the Monitoring settings
@@ -79,8 +89,8 @@ type DriftSpec struct {
 	ShowAll bool `json:"showall"`
 }
 
-// InferenceAdapterSpec defines the configuration for InferenceAdapter Knative Service.
-type InferenceAdapterSpec struct {
+// InferenceLoggerSpec defines the configuration for InferenceLogger Knative Service.
+type InferenceLoggerSpec struct {
 	// +optional
 	MinReplicas int `json:"minReplicas,omitempty"`
 	// +optional
@@ -91,14 +101,15 @@ type InferenceAdapterSpec struct {
 
 // KafkaSpec defines the KafkaTopic used for inference logging.
 type KafkaSpec struct {
+	//+optional
+	Topic string `json:"topic"`
 	//+required
 	Brokers string `json:"brokers"`
-	// TODO: Get brokers using Namespace and ClusterName (needed for Kafka Topic creation)
 }
 
 // ModelMonitorStatus defines the observed state of ModelMonitor
 type ModelMonitorStatus struct {
-	// TODO: Add InferenceAdapter service name
+	// TODO: Add InferenceLogger service name
 }
 
 // +kubebuilder:object:root=true

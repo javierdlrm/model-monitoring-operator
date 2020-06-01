@@ -80,10 +80,10 @@ func (r *ModelMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 	}
 
 	// Build reconcilers
-	inferenceAdapterReconciler := reconcilers.NewInferenceAdapterReconciler(r.Client, r.Scheme, r.Log, r.Recorder, configMap)
+	inferenceLoggerReconciler := reconcilers.NewInferenceLoggerReconciler(r.Client, r.Scheme, r.Log, r.Recorder, configMap)
 
-	// Reconcile InferenceAdapter
-	if err = inferenceAdapterReconciler.Reconcile(modelMonitor); err != nil {
+	// Reconcile InferenceLogger
+	if err = inferenceLoggerReconciler.Reconcile(modelMonitor); err != nil {
 		log.Error(err, "Failed to reconcile")
 		r.Recorder.Eventf(modelMonitor, corev1.EventTypeWarning, "InternalError", err.Error())
 		return ctrl.Result{}, err
