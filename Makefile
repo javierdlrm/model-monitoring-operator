@@ -1,6 +1,8 @@
 
+# Version of the image
+VERSION ?= v1beta1
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= javierdlrm/model-monitoring-operator:${VERSION}
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -59,6 +61,9 @@ vet:
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+# Build and publish as docker image
+docker: fmt vet docker-build docker-push
 
 # Build the docker image
 docker-build: test
