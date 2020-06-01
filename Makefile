@@ -15,7 +15,8 @@ all: manager
 
 # Run tests
 test: generate fmt vet manifests
-	go test ./... -coverprofile cover.out
+	# go test ./... -coverprofile cover.out
+	# TODO: Pending. Currently kubebuilder/bin/etcd binaries are not compatible with WSL. (https://github.com/kubernetes-sigs/kubebuilder/issues/300)
 
 # Build manager binary
 manager: generate fmt vet
@@ -27,20 +28,25 @@ run: generate fmt vet manifests
 
 # Install CRDs into a cluster
 install: manifests
-	kustomize build config/crd | kubectl apply -f -
+	kubectl create ns model-monitoring-system
+	kustomize build config/default/crd | kubectl apply -f -
+	kustomize build config/overlays/dev/configmap | kubectl apply -f -
 
 # Uninstall CRDs from a cluster
 uninstall: manifests
-	kustomize build config/crd | kubectl delete -f -
+	kustomize build config/default/crd | kubectl delete -f -
+	kustomize build config/overlays/dev/configmap | kubectl delete -f -
+	kubectl delete ns model-monitoring-system
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
-	cd config/manager && kustomize edit set image controller=${IMG}
-	kustomize build config/default | kubectl apply -f -
+	cd config/default/manager && kustomize edit set image controller=${IMG}
+	kustomize build config/overlays/dev | kubectl apply -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." \
+	output:crd:artifacts:config=config/default/crd/bases output:rbac:artifacts:config=config/default/rbac
 
 # Run go fmt against code
 fmt:

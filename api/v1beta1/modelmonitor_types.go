@@ -17,28 +17,93 @@ limitations under the License.
 package v1beta1
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ModelMonitorSpec defines the desired state of ModelMonitor
 type ModelMonitorSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	//+required
+	Model ModelSpec `json:"model"`
+	//+optional
+	Monitoring MonitoringSpec `json:"monitoring"`
+	//+optional
+	InferenceAdapter InferenceAdapterSpec `json:"inferenceadapter"`
+	//+required
+	Kafka KafkaSpec `json:"kafka"`
+}
 
-	// Foo is an example field of ModelMonitor. Edit ModelMonitor_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+// ModelSpec defines the Model being monitored. It should match with KFserving inferenceservice name
+type ModelSpec struct {
+	//+required
+	Name string `json:"name"`
+	//+optional
+	ID string `json:"id,omitempty"`
+	//+optional
+	Version int `json:"version,omitempty"`
+}
+
+// MonitoringSpec defines the Monitoring settings
+type MonitoringSpec struct {
+	//+optional
+	Stats []StatSpec `json:"stats,omitempty"`
+	//+optional
+	Outliers []OutlierSpec `json:"outliers,omitempty"`
+	//+optional
+	Drift []DriftSpec `json:"drift,omitempty"`
+}
+
+// StatSpec defines a Statistic
+type StatSpec struct {
+	//+required
+	Name string `json:"name"`
+	//+optional
+	Params map[string]string `json:"params,omitempty"`
+}
+
+// OutlierSpec defines an Outlier detector
+type OutlierSpec struct {
+	//+required
+	Name string `json:"name"`
+	//+optional
+	Params map[string]string `json:"params,omitempty"`
+}
+
+// DriftSpec defines a Drift detector
+type DriftSpec struct {
+	//+required
+	Name string `json:"name"`
+	//+optional
+	Threshold resource.Quantity `json:"threshold"`
+	//+optional
+	ShowAll bool `json:"showall"`
+}
+
+// InferenceAdapterSpec defines the configuration for InferenceAdapter Knative Service.
+type InferenceAdapterSpec struct {
+	// +optional
+	MinReplicas int `json:"minReplicas,omitempty"`
+	// +optional
+	MaxReplicas int `json:"maxReplicas,omitempty"`
+	// +optional
+	Parallelism int `json:"parallelism,omitempty"`
+}
+
+// KafkaSpec defines the KafkaTopic used for inference logging.
+type KafkaSpec struct {
+	//+required
+	Brokers string `json:"brokers"`
+	// TODO: Get brokers using Namespace and ClusterName (needed for Kafka Topic creation)
 }
 
 // ModelMonitorStatus defines the observed state of ModelMonitor
 type ModelMonitorStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// TODO: Add InferenceAdapter service name
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:path=modelmonitors,shortName=modelmonitor
 
 // ModelMonitor is the Schema for the modelmonitors API
 type ModelMonitor struct {

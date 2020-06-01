@@ -1,0 +1,141 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: modelmonitors.monitoring.hops.io
+spec:
+  group: monitoring.hops.io
+  names:
+    kind: ModelMonitor
+    listKind: ModelMonitorList
+    plural: modelmonitors
+    shortNames:
+    - modelmonitor
+    singular: modelmonitor
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ModelMonitor is the Schema for the modelmonitors API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ModelMonitorSpec defines the desired state of ModelMonitor
+          properties:
+            inferenceadapter:
+              description: InferenceAdapterSpec defines the configuration for InferenceAdapter
+                Knative Service.
+              properties:
+                maxReplicas:
+                  type: integer
+                minReplicas:
+                  type: integer
+                parallelism:
+                  type: integer
+              type: object
+            kafka:
+              description: KafkaSpec defines the KafkaTopic used for inference logging.
+              properties:
+                brokers:
+                  type: string
+              required:
+              - brokers
+              type: object
+            model:
+              description: ModelSpec defines the Model being monitored. It should
+                match with KFserving inferenceservice name
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                version:
+                  type: integer
+              required:
+              - name
+              type: object
+            monitoring:
+              description: MonitoringSpec defines the Monitoring settings
+              properties:
+                drift:
+                  items:
+                    description: DriftSpec defines a Drift detector
+                    properties:
+                      name:
+                        type: string
+                      showall:
+                        type: boolean
+                      threshold:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                    required:
+                    - name
+                    type: object
+                  type: array
+                outliers:
+                  items:
+                    description: OutlierSpec defines an Outlier detector
+                    properties:
+                      name:
+                        type: string
+                      params:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  type: array
+                stats:
+                  items:
+                    description: StatSpec defines a Statistic
+                    properties:
+                      name:
+                        type: string
+                      params:
+                        additionalProperties:
+                          type: string
+                        type: object
+                    required:
+                    - name
+                    type: object
+                  type: array
+              type: object
+          required:
+          - kafka
+          - model
+          type: object
+        status:
+          description: ModelMonitorStatus defines the observed state of ModelMonitor
+          type: object
+      type: object
+  version: v1beta1
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

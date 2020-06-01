@@ -1,28 +1,29 @@
 # Adds namespace to all resources.
-namespace: model-monitoring-operator-system
+namespace: model-monitoring-system
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: model-monitoring-operator-
+namePrefix: model-monitoring-
 
 # Labels to add to all resources and selectors.
 #commonLabels:
 #  someName: someValue
 
 bases:
-- ../crd
-- ../rbac
-- ../manager
+- crd
+- configmap
+- rbac
+- manager
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in 
 # crd/kustomization.yaml
-#- ../webhook
+#- webhook
 # [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER'. 'WEBHOOK' components are required.
-#- ../certmanager
+#- certmanager
 # [PROMETHEUS] To enable prometheus monitor, uncomment all sections with 'PROMETHEUS'. 
-#- ../prometheus
+#- prometheus
 
 patchesStrategicMerge:
   # Protect the /metrics endpoint by putting it behind auth.
@@ -68,3 +69,6 @@ vars:
 #    kind: Service
 #    version: v1
 #    name: webhook-service
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

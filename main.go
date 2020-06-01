@@ -20,14 +20,17 @@ import (
 	"flag"
 	"os"
 
+	monitoringv1beta1 "github.com/javierdlrm/model-monitoring-operator/api/v1beta1"
+	"github.com/javierdlrm/model-monitoring-operator/constants"
+	"github.com/javierdlrm/model-monitoring-operator/controllers"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	monitoringv1beta1 "model-monitoring-operator/api/v1beta1"
-	"model-monitoring-operator/controllers"
+	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -40,6 +43,8 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 
 	_ = monitoringv1beta1.AddToScheme(scheme)
+	_ = knservingv1.AddToScheme(scheme)
+
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -59,7 +64,7 @@ func main() {
 		MetricsBindAddress: metricsAddr,
 		Port:               9443,
 		LeaderElection:     enableLeaderElection,
-		LeaderElectionID:   "d3b610fe.hops.io",
+		LeaderElectionID:   "15f4751e.hops.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -67,9 +72,10 @@ func main() {
 	}
 
 	if err = (&controllers.ModelMonitorReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("ModelMonitor"),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers").WithName("ModelMonitor"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor(constants.ModelMonitorControllerName),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "ModelMonitor")
 		os.Exit(1)

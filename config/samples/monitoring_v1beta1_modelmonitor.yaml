@@ -1,7 +1,9 @@
 apiVersion: monitoring.hops.io/v1beta1
 kind: ModelMonitor
 metadata:
-  name: modelmonitor-sample
+  name: flowers-model-monitor
 spec:
-  # Add fields here
-  foo: bar
+  model:
+    name: flowers-sample
+  kafka:
+    brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092

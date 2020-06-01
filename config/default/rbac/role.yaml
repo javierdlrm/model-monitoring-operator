@@ -7,6 +7,13 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
   - monitoring.hops.io
   resources:
   - modelmonitors
@@ -22,6 +29,26 @@ rules:
   - monitoring.hops.io
   resources:
   - modelmonitors/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - serving.knative.dev
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - serving.knative.dev
+  resources:
+  - services/status
   verbs:
   - get
   - patch

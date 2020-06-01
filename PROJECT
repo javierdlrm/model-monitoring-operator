@@ -1,7 +1,7 @@
 domain: hops.io
-repo: model-monitoring-operator
+repo: github.com/javierdlrm/model-monitoring-operator
 resources:
 - group: monitoring
   kind: ModelMonitor
   version: v1beta1
-version: "2"
+version: "1"

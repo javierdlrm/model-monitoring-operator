@@ -1,0 +1,7 @@
+namespace: model-monitoring-system
+
+namePrefix: model-monitoring-
+
+resources:
+    - configmap.yaml
+
