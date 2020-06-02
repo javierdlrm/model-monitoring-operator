@@ -4,29 +4,14 @@ metadata:
   name: modelmonitor-config
   namespace: model-monitoring-system
 data:
-  # monitoring: |-
-  #   {
-  #     "stats": [
-  #       { "name": "min" },
-  #       { "name": "max" },
-  #       { "name": "mean" },
-  #       { "name": "avg"},
-  #       { "name": "stddev"},
-  #       { "name": "distr" },
-  #       { "name": "cov"},
-  #       { "name": "corr"},
-  #       { "name": "perc"}
-  #     ],
-  #     "outliers": [
-  #       { "name": "descriptiveStats" }
-  #     ],
-  #     "drift": [
-  #       { "name": "wasserstein", threshold: 2.7, showAll: true },
-  #       { "name": "kullback-leibler", threshold: 1.3, showAll: true },
-  #       { "name": "jensen-shannon", threshold: 0.5, showAll: true }
-  #     ]
-  #   }
   inferencelogger: |-
     {
-      "containerimage": "javierdlrm/inference-logger:v1beta1"
+        "containerimage": "javierdlrm/inference-logger:v1beta1"
+    }
+  kafka: |-
+    {
+        "topic": {
+            "partitions": 1,
+            "replicationfactor": 1
+        }
     }

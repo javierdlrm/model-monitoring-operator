@@ -50,7 +50,7 @@ func NewInferenceLoggerReconciler(client client.Client, scheme *runtime.Scheme, 
 
 // Reconcile a given ModelMonitor declarative config
 func (r *InferenceLoggerReconciler) Reconcile(modelMonitor *monitoringv1beta1.ModelMonitor) error {
-	log := r.Log.WithValues("inferencelogger", modelMonitor.Namespace+"/"+modelMonitor.Name)
+	log := r.Log.WithValues("inferenceLogger", modelMonitor.Namespace+"/"+modelMonitor.Name)
 
 	serviceName := constants.DefaultInferenceLoggerName(modelMonitor.Name)
 

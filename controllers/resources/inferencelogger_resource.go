@@ -6,6 +6,8 @@ import (
 
 	monitoringv1beta1 "github.com/javierdlrm/model-monitoring-operator/api/v1beta1"
 	"github.com/javierdlrm/model-monitoring-operator/constants"
+	stringutils "github.com/javierdlrm/model-monitoring-operator/utils"
+
 	"github.com/kubeflow/kfserving/pkg/utils"
 
 	corev1 "k8s.io/api/core/v1"
@@ -32,7 +34,7 @@ type InferenceLoggerBuilder struct {
 func NewInferenceLoggerBuilder(client client.Client, config *corev1.ConfigMap) *InferenceLoggerBuilder {
 	modelMonitorConfig, err := monitoringv1beta1.NewModelMonitorConfig(config)
 	if err != nil {
-		fmt.Printf("Failed to get model monitor config %s", err)
+		fmt.Printf("Failed to get model monitor config %s", err.Error())
 		panic("Failed to get model monitor config")
 	}
 	return &InferenceLoggerBuilder{
@@ -85,12 +87,20 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 									ImagePullPolicy: corev1.PullAlways,
 									Env: []corev1.EnvVar{
 										corev1.EnvVar{
+											Name:  constants.InferenceLoggerEnvKafkaBrokersLabel,
+											Value: kafkaSpec.Brokers,
+										},
+										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaTopicLabel,
 											Value: constants.DefaultKafkaTopicName(modelSpec.Name),
 										},
 										corev1.EnvVar{
-											Name:  constants.InferenceLoggerEnvKafkaBrokersLabel,
-											Value: kafkaSpec.Brokers,
+											Name:  constants.InferenceLoggerEnvKafkaTopicPartitionsLabel,
+											Value: stringutils.String32(kafkaSpec.Topic.Partitions),
+										},
+										corev1.EnvVar{
+											Name:  constants.InferenceLoggerEnvKafkaTopicReplicationFactorLabel,
+											Value: stringutils.String16(kafkaSpec.Topic.ReplicationFactor),
 										},
 									},
 									ReadinessProbe: &corev1.Probe{

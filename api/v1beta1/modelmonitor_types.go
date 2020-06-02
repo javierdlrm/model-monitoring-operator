@@ -101,10 +101,20 @@ type InferenceLoggerSpec struct {
 
 // KafkaSpec defines the KafkaTopic used for inference logging.
 type KafkaSpec struct {
-	//+optional
-	Topic string `json:"topic"`
 	//+required
 	Brokers string `json:"brokers"`
+	//+optional
+	Topic KafkaTopicSpec `json:"topic"`
+}
+
+// KafkaTopicSpec defines a Kafka topic
+type KafkaTopicSpec struct {
+	//+required
+	Name string `json:"name"`
+	//+optional
+	Partitions int32 `json:"partitions"`
+	//+optional
+	ReplicationFactor int16 `json:"replicationfactor"`
 }
 
 // ModelMonitorStatus defines the observed state of ModelMonitor

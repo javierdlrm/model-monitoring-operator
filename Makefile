@@ -43,7 +43,12 @@ uninstall: manifests
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
 deploy: manifests
 	cd config/default/manager && kustomize edit set image controller=${IMG}
-	kustomize build config/overlays/dev | kubectl apply -f -
+	kustomize build config/overlays/dev > install/${VERSION}/model-monitoring.yaml
+	kubectl apply -f install/${VERSION}/model-monitoring.yaml
+
+undeploy:
+	cd config/default/manager && kustomize edit set image controller=${IMG}
+	kustomize build config/overlays/dev | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen

@@ -33,20 +33,24 @@ const (
 	Model           ModelMonitorComponent = "model"
 	Monitoring      ModelMonitorComponent = "monitoring"
 	InferenceLogger ModelMonitorComponent = "inferencelogger"
-	KafkaTopic      ModelMonitorComponent = "kafkatopic"
+	Kafka           ModelMonitorComponent = "kafka"
 )
 
 // InferenceLogger constants
 const (
-	InferenceLoggerModelLabel           = "model"
-	InferenceLoggerEnvKafkaTopicLabel   = "KAFKA_TOPIC"
-	InferenceLoggerEnvKafkaBrokersLabel = "KAFKA_BROKERS"
+	InferenceLoggerModelLabel                          = "model"
+	InferenceLoggerEnvKafkaBrokersLabel                = "KAFKA_BROKERS"
+	InferenceLoggerEnvKafkaTopicLabel                  = "KAFKA_TOPIC"
+	InferenceLoggerEnvKafkaTopicPartitionsLabel        = "KAFKA_TOPIC_PARTITIONS"
+	InferenceLoggerEnvKafkaTopicReplicationFactorLabel = "KAFKA_TOPIC_REPLICATION_FACTOR"
 )
 
 // KafkaTopic constants
 const (
-	KafkaTopicLabel   = "topic"
-	KafkaBrokersLabel = "brokers"
+	KafkaTopicLabel                  = "topic"
+	KafkaBrokersLabel                = "brokers"
+	KafkaTopicPartitionsLabel        = "partitions"
+	KafkaTopicReplicationFactorLabel = "replicationfactor"
 )
 
 // DefaultInferenceLoggerName builds a default name
@@ -56,7 +60,8 @@ func DefaultInferenceLoggerName(prefix string) string {
 
 // DefaultKafkaTopicName build a default Kafka Topic name
 func DefaultKafkaTopicName(modelName string) string {
-	return modelName + "-topic"
+	// Don't change. Defaults topic names must match with InferenceLogger
+	return modelName + "-inference-topic"
 }
 
 // String return ModelMonitorComponent as string

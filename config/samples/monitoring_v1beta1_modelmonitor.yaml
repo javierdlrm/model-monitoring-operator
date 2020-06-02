@@ -5,8 +5,14 @@ metadata:
 spec:
   model:
     name: flowers-sample
+    id: flowers-sample-id
+    version: 1
     schema:
       request: "{}"
       response: "{}"
   kafka:
     brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+    topic:
+      name: flowers-sample-inference-topic
+      partitions: 1
+      replicationfactor: 1

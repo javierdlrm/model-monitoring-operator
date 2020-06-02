@@ -45,11 +45,12 @@ type ModelMonitorReconciler struct {
 	Recorder record.EventRecorder
 }
 
-// +kubebuilder:rbac:groups=monitoring.hops.io,resources=modelmonitors,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=monitoring.hops.io,resources=modelmonitors/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=serving.knative.dev,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=serving.knative.dev,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=monitoring.hops.io,resources=modelmonitors,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=monitoring.hops.io,resources=modelmonitors/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
 // Reconcile reconciles ModelMonitor object request
 func (r *ModelMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {

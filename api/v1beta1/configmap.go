@@ -18,14 +18,15 @@ import (
 type ModelMonitorConfig struct {
 	Monitoring      *MonitoringConfig      `json:"monitoring"`
 	InferenceLogger *InferenceLoggerConfig `json:"inferencelogger"`
+	Kafka           *KafkaConfig           `json:"kafka"`
 }
 
 // MonitoringConfig defines the Monitoring configuration
 // +k8s:openapi-gen=false
 type MonitoringConfig struct {
-	Stats    []StatConfig    `json:"stats"`
-	Outliers []OutlierConfig `json:"outliers"`
-	Drift    []DriftConfig   `json:"drift"`
+	Stats    []*StatConfig    `json:"stats"`
+	Outliers []*OutlierConfig `json:"outliers"`
+	Drift    []*DriftConfig   `json:"drift"`
 }
 
 // StatConfig defines a Statistic
@@ -56,6 +57,19 @@ type InferenceLoggerConfig struct {
 	ContainerImage string `json:"containerimage"`
 }
 
+// KafkaConfig defines the configuration for Kafka
+// +k8s:openapi-gen=false
+type KafkaConfig struct {
+	Topic *KafkaTopicConfig `json:"topic"`
+}
+
+// KafkaTopicConfig defines the configuration for a Kafka topic
+// +k8s:openapi-gen=false
+type KafkaTopicConfig struct {
+	Partitions        int32 `json:"partitions"`
+	ReplicationFactor int16 `json:"replicationfactor"`
+}
+
 // GetModelMonitorConfig returns the ModelMonitor config
 func GetModelMonitorConfig(client client.Client) (*ModelMonitorConfig, error) {
 	configMap := &corev1.ConfigMap{}
@@ -74,6 +88,7 @@ func GetModelMonitorConfig(client client.Client) (*ModelMonitorConfig, error) {
 
 // NewModelMonitorConfig creates a ModelMonitorConfig from a given configmap
 func NewModelMonitorConfig(configMap *corev1.ConfigMap) (*ModelMonitorConfig, error) {
+
 	monitoringConfig, err := getMonitoringConfig(configMap)
 	if err != nil {
 		return nil, err
@@ -84,9 +99,15 @@ func NewModelMonitorConfig(configMap *corev1.ConfigMap) (*ModelMonitorConfig, er
 		return nil, err
 	}
 
+	kafkaConfig, err := getKafkaConfig(configMap)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ModelMonitorConfig{
 		Monitoring:      monitoringConfig,
 		InferenceLogger: inferenceLoggerConfig,
+		Kafka:           kafkaConfig,
 	}, nil
 }
 
@@ -113,5 +134,20 @@ func getInferenceLoggerConfig(configMap *corev1.ConfigMap) (*InferenceLoggerConf
 			return nil, fmt.Errorf("Unable to unmarshall %v json string due to %v ", key, err)
 		}
 	}
+
 	return inferenceLoggerConfig, nil
+}
+
+func getKafkaConfig(configMap *corev1.ConfigMap) (*KafkaConfig, error) {
+	kafkaConfig := &KafkaConfig{}
+	key := constants.Kafka.String()
+
+	if data, ok := configMap.Data[key]; ok {
+		err := json.Unmarshal([]byte(data), &kafkaConfig)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to unmarshall %v json string due to %v ", key, err)
+		}
+	}
+
+	return kafkaConfig, nil
 }
