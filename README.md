@@ -10,7 +10,7 @@ Kubernetes operator for ML model monitoring over KFServing, with Kafka, Spark an
 `kubectl apply -f model-monitor.yaml`
 
 3. Serve your model with KFServing specifying the following logger url:
-'http://<model-monitor-name>-inferencelogger.<namespace>'
+'http://\<model-monitor-name\>-inferencelogger.\<namespace\>'
 
 4. Check the inference analysis of your model by visiting the sinks specified in your Model Monitor.
 
