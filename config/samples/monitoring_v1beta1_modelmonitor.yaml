@@ -7,12 +7,36 @@ spec:
     name: flowers-sample
     id: flowers-sample-id
     version: 1
-    schema:
-      request: "{}"
-      response: "{}"
-  kafka:
-    brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
-    topic:
-      name: flowers-sample-inference-topic
-      partitions: 1
-      replicationfactor: 1
+    schemas:
+      request: '{ "type": "struct", "fields": [ { "name": "instances", "type": { "type": "array", "elementType": { "type": "struct", "fields": [ { "name": "image_bytes", "type": { "type": "struct", "fields": [ { "name": "b64", "type": "string", "nullable": true, "metadata": {} } ] }, "nullable": true, "metadata": {} } ] }, "containsNull": true }, "nullable": true, "metadata": {} } ] }'
+      response: '{}'
+  monitoring:
+    trigger:
+      window:
+        duration: 3000
+        slide: 1000
+        watermarkDelay: 2000
+    stats:
+      - name: max
+      - name: min
+      - name: count
+      - name: avg
+      - name: mean
+      - name: stddev
+  job:
+    timeout: 180000
+    source:
+      kafka:
+        brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+        topic:
+          name: flowers-sample-inference-topic
+          partitions: 3
+          replicationFactor: 3
+    sink:
+      - pipe: stats
+        kafka:
+          brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+          topic:
+            name: flowers-sample-inference-analysis-topic
+            partitions: 3
+            replicationFactor: 3

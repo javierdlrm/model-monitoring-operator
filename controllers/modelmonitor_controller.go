@@ -34,6 +34,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	sparkv1beta2 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2"
 	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
 )
 
@@ -47,8 +48,15 @@ type ModelMonitorReconciler struct {
 
 // +kubebuilder:rbac:groups=serving.knative.dev,resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=serving.knative.dev,resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=sparkoperator.k8s.io,resources=sparkapplications,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=sparkoperator.k8s.io,resources=sparkapplications/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=monitoring.hops.io,resources=modelmonitors,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=monitoring.hops.io,resources=modelmonitors/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;create;
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;create;
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;create;
+// +kubebuilder:rbac:groups="",resources=services,verbs=*
+// +kubebuilder:rbac:groups="",resources=pods,verbs=*
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch
 
@@ -82,9 +90,17 @@ func (r *ModelMonitorReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error
 
 	// Build reconcilers
 	inferenceLoggerReconciler := reconcilers.NewInferenceLoggerReconciler(r.Client, r.Scheme, r.Log, r.Recorder, configMap)
+	monitoringJobReconciler := reconcilers.NewMonitoringJobReconciler(r.Client, r.Scheme, r.Log, r.Recorder, configMap)
 
 	// Reconcile InferenceLogger
 	if err = inferenceLoggerReconciler.Reconcile(modelMonitor); err != nil {
+		log.Error(err, "Failed to reconcile")
+		r.Recorder.Eventf(modelMonitor, corev1.EventTypeWarning, "InternalError", err.Error())
+		return ctrl.Result{}, err
+	}
+
+	// Reconcile MonitoringJob
+	if err = monitoringJobReconciler.Reconcile(modelMonitor); err != nil {
 		log.Error(err, "Failed to reconcile")
 		r.Recorder.Eventf(modelMonitor, corev1.EventTypeWarning, "InternalError", err.Error())
 		return ctrl.Result{}, err
@@ -104,5 +120,6 @@ func (r *ModelMonitorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&monitoringv1beta1.ModelMonitor{}).
 		Owns(&knservingv1.Service{}).
+		Owns(&sparkv1beta2.SparkApplication{}).
 		Complete(r)
 }

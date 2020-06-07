@@ -25,12 +25,12 @@ import (
 type ModelMonitorSpec struct {
 	//+required
 	Model ModelSpec `json:"model"`
-	//+optional
-	Monitoring MonitoringSpec `json:"monitoring"`
-	//+optional
-	InferenceLogger InferenceLoggerSpec `json:"inferencelogger"`
 	//+required
-	Kafka KafkaSpec `json:"kafka"`
+	Monitoring MonitoringSpec `json:"monitoring"`
+	//+required
+	Job JobSpec `json:"job"`
+	//+optional
+	InferenceLogger InferenceLoggerSpec `json:"inferenceLogger,omitempty"`
 }
 
 // ModelSpec defines the Model being monitored. It should match with KFserving inferenceservice name
@@ -42,11 +42,11 @@ type ModelSpec struct {
 	//+optional
 	Version int `json:"version,omitempty"`
 	//+required
-	Schema ModelSchemaSpec `json:"schema"`
+	Schemas ModelSchemasSpec `json:"schemas"`
 }
 
-// ModelSchemaSpec defines the inference schema of a model
-type ModelSchemaSpec struct {
+// ModelSchemasSpec defines the inference schema of a model
+type ModelSchemasSpec struct {
 	//+required
 	Request string `json:"request"`
 	//+required
@@ -55,12 +55,30 @@ type ModelSchemaSpec struct {
 
 // MonitoringSpec defines the Monitoring settings
 type MonitoringSpec struct {
-	//+optional
-	Stats []StatSpec `json:"stats,omitempty"`
+	//+required
+	Trigger TriggerSpec `json:"trigger"`
+	//+required
+	Stats []StatSpec `json:"stats"`
 	//+optional
 	Outliers []OutlierSpec `json:"outliers,omitempty"`
 	//+optional
 	Drift []DriftSpec `json:"drift,omitempty"`
+}
+
+// TriggerSpec defines the Monitoring trigger setting
+type TriggerSpec struct {
+	//+required
+	Window WindowSpec `json:"window"`
+}
+
+// WindowSpec defines a Window as Monitoring job trigger
+type WindowSpec struct {
+	//+required
+	Duration int `json:"duration"`
+	//+required
+	Slide int `json:"slide"`
+	//+required
+	WatermarkDelay int `json:"watermarkDelay"`
 }
 
 // StatSpec defines a Statistic
@@ -84,9 +102,9 @@ type DriftSpec struct {
 	//+required
 	Name string `json:"name"`
 	//+optional
-	Threshold resource.Quantity `json:"threshold"`
+	Threshold resource.Quantity `json:"threshold,omitempty"`
 	//+optional
-	ShowAll bool `json:"showall"`
+	ShowAll bool `json:"showall,omitempty"`
 }
 
 // InferenceLoggerSpec defines the configuration for InferenceLogger Knative Service.
@@ -99,11 +117,36 @@ type InferenceLoggerSpec struct {
 	Parallelism int `json:"parallelism,omitempty"`
 }
 
+//JobSpec defines the configuration for Monitoring job
+type JobSpec struct {
+	//+required
+	Source SourceSpec `json:"source"`
+	//+optional
+	Sink []SinkSpec `json:"sink,omitempty"`
+	//+optional
+	Timeout int `json:"timeout,omitempty"`
+}
+
+//SourceSpec defines the configuration of the source for the Monitoring job
+type SourceSpec struct {
+	//+required
+	Kafka KafkaSpec `json:"kafka"`
+}
+
+//SinkSpec defines the configuration of the sink for the Monitoring job
+type SinkSpec struct {
+	//+required
+	//+kubebuilder:validation:Enum=stats;outliers;drift
+	Pipe string `json:"pipe"`
+	//+required
+	Kafka KafkaSpec `json:"kafka"`
+}
+
 // KafkaSpec defines the KafkaTopic used for inference logging.
 type KafkaSpec struct {
 	//+required
 	Brokers string `json:"brokers"`
-	//+optional
+	//+required
 	Topic KafkaTopicSpec `json:"topic"`
 }
 
@@ -114,7 +157,7 @@ type KafkaTopicSpec struct {
 	//+optional
 	Partitions int32 `json:"partitions"`
 	//+optional
-	ReplicationFactor int16 `json:"replicationfactor"`
+	ReplicationFactor int16 `json:"replicationFactor"`
 }
 
 // ModelMonitorStatus defines the observed state of ModelMonitor

@@ -8,7 +8,6 @@ import (
 	"github.com/javierdlrm/model-monitoring-operator/constants"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -16,63 +15,28 @@ import (
 // ModelMonitorConfig defines the ModelMonitor configuration
 // +k8s:openapi-gen=false
 type ModelMonitorConfig struct {
-	Monitoring      *MonitoringConfig      `json:"monitoring"`
-	InferenceLogger *InferenceLoggerConfig `json:"inferencelogger"`
-	Kafka           *KafkaConfig           `json:"kafka"`
-}
-
-// MonitoringConfig defines the Monitoring configuration
-// +k8s:openapi-gen=false
-type MonitoringConfig struct {
-	Stats    []*StatConfig    `json:"stats"`
-	Outliers []*OutlierConfig `json:"outliers"`
-	Drift    []*DriftConfig   `json:"drift"`
-}
-
-// StatConfig defines a Statistic
-// +k8s:openapi-gen=false
-type StatConfig struct {
-	Name   string            `json:"name"`
-	Params map[string]string `json:"params"`
-}
-
-// OutlierConfig defines an Outlier detector
-// +k8s:openapi-gen=false
-type OutlierConfig struct {
-	Name   string            `json:"name"`
-	Params map[string]string `json:"params"`
-}
-
-// DriftConfig defines a Drift detector
-// +k8s:openapi-gen=false
-type DriftConfig struct {
-	Name      string            `json:"name"`
-	Threshold resource.Quantity `json:"threshold"`
-	ShowAll   bool              `json:"showall"`
+	Job             *JobConfig             `json:"job"`
+	InferenceLogger *InferenceLoggerConfig `json:"inferenceLogger"`
 }
 
 // InferenceLoggerConfig defines the configuration for the InferenceLogger service
 // +k8s:openapi-gen=false
 type InferenceLoggerConfig struct {
-	ContainerImage string `json:"containerimage"`
+	ContainerImage string `json:"containerImage"`
 }
 
-// KafkaConfig defines the configuration for Kafka
+// JobConfig defines the configuration for the Monitoring job
 // +k8s:openapi-gen=false
-type KafkaConfig struct {
-	Topic *KafkaTopicConfig `json:"topic"`
-}
-
-// KafkaTopicConfig defines the configuration for a Kafka topic
-// +k8s:openapi-gen=false
-type KafkaTopicConfig struct {
-	Partitions        int32 `json:"partitions"`
-	ReplicationFactor int16 `json:"replicationfactor"`
+type JobConfig struct {
+	ContainerImage      string `json:"containerImage"`
+	MainClass           string `json:"mainClass"`
+	MainApplicationFile string `json:"mainApplicationFile"`
 }
 
 // GetModelMonitorConfig returns the ModelMonitor config
 func GetModelMonitorConfig(client client.Client) (*ModelMonitorConfig, error) {
 	configMap := &corev1.ConfigMap{}
+
 	err := client.Get(context.TODO(), types.NamespacedName{Name: constants.ModelMonitorConfigMapName, Namespace: constants.ModelMonitoringNamespace}, configMap)
 	if err != nil {
 		return nil, err
@@ -89,7 +53,7 @@ func GetModelMonitorConfig(client client.Client) (*ModelMonitorConfig, error) {
 // NewModelMonitorConfig creates a ModelMonitorConfig from a given configmap
 func NewModelMonitorConfig(configMap *corev1.ConfigMap) (*ModelMonitorConfig, error) {
 
-	monitoringConfig, err := getMonitoringConfig(configMap)
+	jobConfig, err := getJobConfig(configMap)
 	if err != nil {
 		return nil, err
 	}
@@ -99,29 +63,23 @@ func NewModelMonitorConfig(configMap *corev1.ConfigMap) (*ModelMonitorConfig, er
 		return nil, err
 	}
 
-	kafkaConfig, err := getKafkaConfig(configMap)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ModelMonitorConfig{
-		Monitoring:      monitoringConfig,
+		Job:             jobConfig,
 		InferenceLogger: inferenceLoggerConfig,
-		Kafka:           kafkaConfig,
 	}, nil
 }
 
-func getMonitoringConfig(configMap *corev1.ConfigMap) (*MonitoringConfig, error) {
-	monitoringConfig := &MonitoringConfig{}
-	key := constants.Monitoring.String()
+func getJobConfig(configMap *corev1.ConfigMap) (*JobConfig, error) {
+	jobConfig := &JobConfig{}
+	key := constants.Job.String()
 
 	if data, ok := configMap.Data[key]; ok {
-		err := json.Unmarshal([]byte(data), &monitoringConfig)
+		err := json.Unmarshal([]byte(data), &jobConfig)
 		if err != nil {
 			return nil, fmt.Errorf("Unable to unmarshall %v json string due to %v ", key, err)
 		}
 	}
-	return monitoringConfig, nil
+	return jobConfig, nil
 }
 
 func getInferenceLoggerConfig(configMap *corev1.ConfigMap) (*InferenceLoggerConfig, error) {
@@ -136,18 +94,4 @@ func getInferenceLoggerConfig(configMap *corev1.ConfigMap) (*InferenceLoggerConf
 	}
 
 	return inferenceLoggerConfig, nil
-}
-
-func getKafkaConfig(configMap *corev1.ConfigMap) (*KafkaConfig, error) {
-	kafkaConfig := &KafkaConfig{}
-	key := constants.Kafka.String()
-
-	if data, ok := configMap.Data[key]; ok {
-		err := json.Unmarshal([]byte(data), &kafkaConfig)
-		if err != nil {
-			return nil, fmt.Errorf("Unable to unmarshall %v json string due to %v ", key, err)
-		}
-	}
-
-	return kafkaConfig, nil
 }

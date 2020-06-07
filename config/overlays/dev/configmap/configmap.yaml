@@ -4,14 +4,13 @@ metadata:
   name: modelmonitor-config
   namespace: model-monitoring-system
 data:
-  inferencelogger: |-
+  inferenceLogger: |-
     {
-        "containerimage": "javierdlrm/inference-logger:v1beta1"
+        "containerImage": "javierdlrm/inference-logger:v1beta1"
     }
-  kafka: |-
+  job: |-
     {
-        "topic": {
-            "partitions": 1,
-            "replicationfactor": 1
-        }
+        "containerImage": "javierdlrm/model-monitoring-job:v1beta1",
+        "mainClass": "io.hops.ml.monitoring.job.Monitor",
+        "mainApplicationFile": "local:///opt/spark/model-monitoring-job/job-1.0-SNAPSHOT.jar"
     }

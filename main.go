@@ -30,6 +30,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	sparkv1beta2 "github.com/GoogleCloudPlatform/spark-on-k8s-operator/pkg/apis/sparkoperator.k8s.io/v1beta2"
 	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
 	// +kubebuilder:scaffold:imports
 )
@@ -44,6 +45,7 @@ func init() {
 
 	_ = monitoringv1beta1.AddToScheme(scheme)
 	_ = knservingv1.AddToScheme(scheme)
+	_ = sparkv1beta2.AddToScheme(scheme)
 
 	// +kubebuilder:scaffold:scheme
 }

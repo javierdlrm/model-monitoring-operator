@@ -1,8 +1,16 @@
 
-# Version of the image
+# Image details
+IMG_NAME ?= javierdlrm/model-monitoring-operator
 VERSION ?= v1beta1
-# Image URL to use all building/pushing image targets
-IMG ?= javierdlrm/model-monitoring-operator:${VERSION}
+IMG_V ?= ${IMG_NAME}:${VERSION}
+IMG_L ?= ${IMG_NAME}:latest
+# Mode
+MODE ?= version
+ifeq ($(MODE),latest)
+IMG=${IMG_L}
+else
+IMG=${IMG_V}
+endif
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -28,6 +36,11 @@ manager: generate fmt vet
 run: generate fmt vet manifests
 	go run ./main.go
 
+# Generates a yaml file for installing the operator
+installer: manifests generate
+	cd config/default/manager && kustomize edit set image controller=${IMG}
+	kustomize build config/overlays/dev > install/${VERSION}/model-monitoring.yaml
+
 # Install CRDs into a cluster
 install: manifests
 	kubectl create ns model-monitoring-system
@@ -41,14 +54,12 @@ uninstall: manifests
 	kubectl delete ns model-monitoring-system
 
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests
-	cd config/default/manager && kustomize edit set image controller=${IMG}
-	kustomize build config/overlays/dev > install/${VERSION}/model-monitoring.yaml
+deploy: manifests installer
 	kubectl apply -f install/${VERSION}/model-monitoring.yaml
 
-undeploy:
-	cd config/default/manager && kustomize edit set image controller=${IMG}
-	kustomize build config/overlays/dev | kubectl delete -f -
+# Remove deployment in the configured Kubernetes cluster in ~/.kube/config
+undeploy: installer
+	kubectl delete -f install/${VERSION}/model-monitoring.yaml
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -72,11 +83,12 @@ docker: fmt vet docker-build docker-push
 
 # Build the docker image
 docker-build: test
-	docker build . -t ${IMG}
+	docker build . -t ${IMG_V} -t ${IMG_L}
 
 # Push the docker image
 docker-push:
-	docker push ${IMG}
+	docker push ${IMG_V}
+	docker push ${IMG_L}
 
 # find or download controller-gen
 # download controller-gen if necessary

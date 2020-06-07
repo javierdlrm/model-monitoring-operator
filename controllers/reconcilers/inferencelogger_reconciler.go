@@ -44,15 +44,14 @@ func NewInferenceLoggerReconciler(client client.Client, scheme *runtime.Scheme, 
 		Scheme:   scheme,
 		Log:      log,
 		Recorder: recorder,
-		Builder:  resources.NewInferenceLoggerBuilder(client, config),
+		Builder:  resources.NewInferenceLoggerBuilder(config, log),
 	}
 }
 
 // Reconcile a given ModelMonitor declarative config
 func (r *InferenceLoggerReconciler) Reconcile(modelMonitor *monitoringv1beta1.ModelMonitor) error {
-	log := r.Log.WithValues("inferenceLogger", modelMonitor.Namespace+"/"+modelMonitor.Name)
-
 	serviceName := constants.DefaultInferenceLoggerName(modelMonitor.Name)
+	r.Log = r.Log.WithValues("inferenceLogger", modelMonitor.Namespace+"/"+modelMonitor.Name, "serviceName", serviceName)
 
 	var service *knservingv1.Service
 	var err error
@@ -62,7 +61,7 @@ func (r *InferenceLoggerReconciler) Reconcile(modelMonitor *monitoringv1beta1.Mo
 	}
 
 	if service == nil {
-		if err = r.finalizeService(serviceName, modelMonitor.Namespace, log); err != nil {
+		if err = r.finalizeService(serviceName, modelMonitor.Namespace); err != nil {
 			return err
 		}
 
@@ -71,7 +70,7 @@ func (r *InferenceLoggerReconciler) Reconcile(modelMonitor *monitoringv1beta1.Mo
 	}
 
 	// _, err => status, err
-	if _, err := r.reconcileService(modelMonitor, service, log); err != nil {
+	if _, err := r.reconcileService(modelMonitor, service); err != nil {
 		return err
 	}
 
@@ -79,14 +78,14 @@ func (r *InferenceLoggerReconciler) Reconcile(modelMonitor *monitoringv1beta1.Mo
 	return nil
 }
 
-func (r *InferenceLoggerReconciler) finalizeService(serviceName string, namespace string, log logr.Logger) error {
+func (r *InferenceLoggerReconciler) finalizeService(serviceName string, namespace string) error {
 	existing := &knservingv1.Service{}
 	if err := r.Client.Get(context.TODO(), types.NamespacedName{Name: serviceName, Namespace: namespace}, existing); err != nil {
 		if !errors.IsNotFound(err) {
 			return err
 		}
 	} else {
-		log.Info("Deleting Knative Service", "namespace", namespace, "name", serviceName)
+		r.Log.Info("Deleting Knative Service", "namespace", namespace, "name", serviceName)
 		if err := r.Client.Delete(context.TODO(), existing, client.PropagationPolicy(metav1.DeletePropagationBackground)); err != nil {
 			if !errors.IsNotFound(err) {
 				return err
@@ -96,9 +95,7 @@ func (r *InferenceLoggerReconciler) finalizeService(serviceName string, namespac
 	return nil
 }
 
-func (r *InferenceLoggerReconciler) reconcileService(modelMonitor *monitoringv1beta1.ModelMonitor, desired *knservingv1.Service,
-	log logr.Logger) (*knservingv1.ServiceStatus, error) {
-
+func (r *InferenceLoggerReconciler) reconcileService(modelMonitor *monitoringv1beta1.ModelMonitor, desired *knservingv1.Service) (*knservingv1.ServiceStatus, error) {
 	// Set ModelMonitor as owner of desired service
 	if err := controllerutil.SetControllerReference(modelMonitor, desired, r.Scheme); err != nil {
 		return nil, err
@@ -109,15 +106,15 @@ func (r *InferenceLoggerReconciler) reconcileService(modelMonitor *monitoringv1b
 	err := r.Client.Get(context.TODO(), types.NamespacedName{Name: desired.Name, Namespace: desired.Namespace}, existing)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			log.Info("Creating Knative Service", "namespace", desired.Namespace, "name", desired.Name)
+			r.Log.Info("Creating Knative Service", "namespace", desired.Namespace, "name", desired.Name)
 			return &desired.Status, r.Client.Create(context.TODO(), desired)
 		}
 		return nil, err
 	}
 
 	// Return if no differences to reconcile.
-	if semanticEquals(desired, existing) {
-		log.Info("No differences found")
+	if knativeServiceSemanticEquals(desired, existing) {
+		r.Log.Info("No differences found")
 		return &existing.Status, nil
 	}
 
@@ -127,8 +124,8 @@ func (r *InferenceLoggerReconciler) reconcileService(modelMonitor *monitoringv1b
 		return &existing.Status, fmt.Errorf("Failed to diff Knative Service: %v", err)
 	}
 
-	log.Info("Reconciling Knative Service diff (-desired, +observed):", "diff", diff)
-	log.Info("Updating Knative Service", "namespace", desired.Namespace, "name", desired.Name)
+	r.Log.Info("Reconciling Knative Service diff (-desired, +observed):", "diff", diff)
+	r.Log.Info("Updating Knative Service", "namespace", desired.Namespace, "name", desired.Name)
 
 	existing.Spec.ConfigurationSpec = desired.Spec.ConfigurationSpec
 	existing.ObjectMeta.Labels = desired.ObjectMeta.Labels
@@ -139,7 +136,7 @@ func (r *InferenceLoggerReconciler) reconcileService(modelMonitor *monitoringv1b
 	return &existing.Status, nil
 }
 
-func semanticEquals(desired, service *knservingv1.Service) bool {
+func knativeServiceSemanticEquals(desired *knservingv1.Service, service *knservingv1.Service) bool {
 	return equality.Semantic.DeepEqual(desired.Spec.ConfigurationSpec, service.Spec.ConfigurationSpec) &&
 		equality.Semantic.DeepEqual(desired.ObjectMeta.Labels, service.ObjectMeta.Labels)
 }

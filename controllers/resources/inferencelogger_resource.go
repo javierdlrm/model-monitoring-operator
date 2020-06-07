@@ -6,14 +6,15 @@ import (
 
 	monitoringv1beta1 "github.com/javierdlrm/model-monitoring-operator/api/v1beta1"
 	"github.com/javierdlrm/model-monitoring-operator/constants"
-	stringutils "github.com/javierdlrm/model-monitoring-operator/utils"
+	typesutils "github.com/javierdlrm/model-monitoring-operator/utils"
 
 	"github.com/kubeflow/kfserving/pkg/utils"
+
+	"github.com/go-logr/logr"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"knative.dev/serving/pkg/apis/autoscaling"
 	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
@@ -28,10 +29,11 @@ var serviceAnnotationDisallowedList = []string{
 // InferenceLoggerBuilder defines the builder for InferenceLogger
 type InferenceLoggerBuilder struct {
 	ModelMonitorConfig *monitoringv1beta1.ModelMonitorConfig
+	Log                logr.Logger
 }
 
 // NewInferenceLoggerBuilder creates an InferenceLogger builder
-func NewInferenceLoggerBuilder(client client.Client, config *corev1.ConfigMap) *InferenceLoggerBuilder {
+func NewInferenceLoggerBuilder(config *corev1.ConfigMap, log logr.Logger) *InferenceLoggerBuilder {
 	modelMonitorConfig, err := monitoringv1beta1.NewModelMonitorConfig(config)
 	if err != nil {
 		fmt.Printf("Failed to get model monitor config %s", err.Error())
@@ -39,6 +41,7 @@ func NewInferenceLoggerBuilder(client client.Client, config *corev1.ConfigMap) *
 	}
 	return &InferenceLoggerBuilder{
 		ModelMonitorConfig: modelMonitorConfig,
+		Log:                log,
 	}
 }
 
@@ -49,9 +52,9 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 	metadata := modelMonitor.ObjectMeta
 	modelSpec := &modelMonitor.Spec.Model
 	inferenceLoggerSpec := &modelMonitor.Spec.InferenceLogger
-	kafkaSpec := &modelMonitor.Spec.Kafka
+	kafkaSpec := &modelMonitor.Spec.Job.Source.Kafka
 
-	// Annotations
+	// Autoscaling annotations
 	annotations, err := b.buildAnnotations(metadata, inferenceLoggerSpec.MinReplicas, inferenceLoggerSpec.MaxReplicas, inferenceLoggerSpec.Parallelism)
 	if err != nil {
 		return nil, err
@@ -77,11 +80,11 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 						Annotations: annotations,
 					},
 					Spec: knservingv1.RevisionSpec{
-						TimeoutSeconds:       &constants.DefaultInferenceLoggerTimeout,
+						TimeoutSeconds:       &constants.InferenceLoggerDefaultTimeout,
 						ContainerConcurrency: &concurrency,
 						PodSpec: corev1.PodSpec{
 							Containers: []corev1.Container{
-								corev1.Container{
+								{
 									Image:           b.ModelMonitorConfig.InferenceLogger.ContainerImage,
 									Name:            constants.ModelMonitorContainerName,
 									ImagePullPolicy: corev1.PullAlways,
@@ -96,11 +99,11 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 										},
 										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaTopicPartitionsLabel,
-											Value: stringutils.String32(kafkaSpec.Topic.Partitions),
+											Value: typesutils.String32(kafkaSpec.Topic.Partitions),
 										},
 										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaTopicReplicationFactorLabel,
-											Value: stringutils.String16(kafkaSpec.Topic.ReplicationFactor),
+											Value: typesutils.String16(kafkaSpec.Topic.ReplicationFactor),
 										},
 									},
 									ReadinessProbe: &corev1.Probe{
@@ -129,8 +132,8 @@ func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, mi
 		return !utils.Includes(serviceAnnotationDisallowedList, key)
 	})
 
-	if minReplicas != 0 {
-		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(constants.DefaultMinReplicas)
+	if minReplicas == 0 {
+		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMinReplicas)
 	} else if minReplicas != 0 {
 		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(minReplicas)
 	}
@@ -142,7 +145,7 @@ func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, mi
 	// User can pass down scaling target annotation to overwrite the target default 1
 	if _, ok := annotations[autoscaling.TargetAnnotationKey]; !ok {
 		if parallelism == 0 {
-			annotations[autoscaling.TargetAnnotationKey] = constants.DefaultScalingTarget
+			annotations[autoscaling.TargetAnnotationKey] = constants.InferenceLoggerDefaultScalingTarget
 		} else {
 			annotations[autoscaling.TargetAnnotationKey] = strconv.Itoa(parallelism)
 		}

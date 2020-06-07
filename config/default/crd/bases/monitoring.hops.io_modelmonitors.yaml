@@ -38,7 +38,7 @@ spec:
         spec:
           description: ModelMonitorSpec defines the desired state of ModelMonitor
           properties:
-            inferencelogger:
+            inferenceLogger:
               description: InferenceLoggerSpec defines the configuration for InferenceLogger
                 Knative Service.
               properties:
@@ -49,26 +49,82 @@ spec:
                 parallelism:
                   type: integer
               type: object
-            kafka:
-              description: KafkaSpec defines the KafkaTopic used for inference logging.
+            job:
+              description: JobSpec defines the configuration for Monitoring job
               properties:
-                brokers:
-                  type: string
-                topic:
-                  description: KafkaTopicSpec defines a Kafka topic
+                sink:
+                  items:
+                    description: SinkSpec defines the configuration of the sink for
+                      the Monitoring job
+                    properties:
+                      kafka:
+                        description: KafkaSpec defines the KafkaTopic used for inference
+                          logging.
+                        properties:
+                          brokers:
+                            type: string
+                          topic:
+                            description: KafkaTopicSpec defines a Kafka topic
+                            properties:
+                              name:
+                                type: string
+                              partitions:
+                                format: int32
+                                type: integer
+                              replicationFactor:
+                                type: integer
+                            required:
+                            - name
+                            type: object
+                        required:
+                        - brokers
+                        - topic
+                        type: object
+                      pipe:
+                        enum:
+                        - stats
+                        - outliers
+                        - drift
+                        type: string
+                    required:
+                    - kafka
+                    - pipe
+                    type: object
+                  type: array
+                source:
+                  description: SourceSpec defines the configuration of the source
+                    for the Monitoring job
                   properties:
-                    name:
-                      type: string
-                    partitions:
-                      format: int32
-                      type: integer
-                    replicationfactor:
-                      type: integer
+                    kafka:
+                      description: KafkaSpec defines the KafkaTopic used for inference
+                        logging.
+                      properties:
+                        brokers:
+                          type: string
+                        topic:
+                          description: KafkaTopicSpec defines a Kafka topic
+                          properties:
+                            name:
+                              type: string
+                            partitions:
+                              format: int32
+                              type: integer
+                            replicationFactor:
+                              type: integer
+                          required:
+                          - name
+                          type: object
+                      required:
+                      - brokers
+                      - topic
+                      type: object
                   required:
-                  - name
+                  - kafka
                   type: object
+                timeout:
+                  type: integer
               required:
-              - brokers
+              - source
               type: object
             model:
               description: ModelSpec defines the Model being monitored. It should
@@ -78,8 +134,9 @@ spec:
                   type: string
                 name:
                   type: string
-                schema:
-                  description: ModelSchemaSpec defines the inference schema of a model
+                schemas:
+                  description: ModelSchemasSpec defines the inference schema of a
+                    model
                   properties:
                     request:
                       type: string
@@ -93,7 +150,7 @@ spec:
                   type: integer
               required:
               - name
-              - schema
+              - schemas
               type: object
             monitoring:
               description: MonitoringSpec defines the Monitoring settings
@@ -144,10 +201,34 @@ spec:
                     - name
                     type: object
                   type: array
+                trigger:
+                  description: TriggerSpec defines the Monitoring trigger setting
+                  properties:
+                    window:
+                      description: WindowSpec defines a Window as Monitoring job trigger
+                      properties:
+                        duration:
+                          type: integer
+                        slide:
+                          type: integer
+                        watermarkDelay:
+                          type: integer
+                      required:
+                      - duration
+                      - slide
+                      - watermarkDelay
+                      type: object
+                  required:
+                  - window
+                  type: object
+              required:
+              - stats
+              - trigger
               type: object
           required:
-          - kafka
+          - job
           - model
+          - monitoring
           type: object
         status:
           description: ModelMonitorStatus defines the observed state of ModelMonitor

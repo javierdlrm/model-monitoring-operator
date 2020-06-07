@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: javierdlrm/model-monitoring-operator
-  newTag: v1beta1
+  newTag: latest
