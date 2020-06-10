@@ -52,48 +52,298 @@ spec:
             job:
               description: JobSpec defines the configuration for Monitoring job
               properties:
-                sink:
-                  items:
-                    description: SinkSpec defines the configuration of the sink for
-                      the Monitoring job
-                    properties:
-                      kafka:
-                        description: KafkaSpec defines the KafkaTopic used for inference
-                          logging.
-                        properties:
-                          brokers:
-                            type: string
-                          topic:
-                            description: KafkaTopicSpec defines a Kafka topic
-                            properties:
-                              name:
-                                type: string
-                              partitions:
-                                format: int32
-                                type: integer
-                              replicationFactor:
-                                type: integer
-                            required:
-                            - name
-                            type: object
-                        required:
-                        - brokers
-                        - topic
-                        type: object
-                      pipe:
-                        enum:
-                        - stats
-                        - outliers
-                        - drift
+                timeout:
+                  type: integer
+              type: object
+            model:
+              description: ModelSpec defines the Model being monitored. It should
+                match with KFserving inferenceservice name
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                schemas:
+                  description: ModelSchemasSpec defines the inference schema of a
+                    model
+                  properties:
+                    instance:
+                      type: string
+                    prediction:
+                      type: string
+                    request:
+                      type: string
+                    response:
+                      type: string
+                  required:
+                  - instance
+                  - prediction
+                  - request
+                  - response
+                  type: object
+                version:
+                  type: integer
+              required:
+              - name
+              - schemas
+              type: object
+            monitoring:
+              description: MonitoringSpec defines the Monitoring settings
+              properties:
+                baseline:
+                  description: BaselineSpec defines Baseline stats
+                  properties:
+                    descriptive:
+                      type: string
+                    distributions:
+                      type: string
+                  type: object
+                drift:
+                  description: DriftSpec defines a Drift detector
+                  properties:
+                    jensenShannon:
+                      description: ThresholdBasedDriftSpec defines a threshold-based
+                        Drift detector
+                      properties:
+                        showAll:
+                          type: boolean
+                        threshold:
+                          type: string
+                      required:
+                      - threshold
+                      type: object
+                    kullbackLeibler:
+                      description: ThresholdBasedDriftSpec defines a threshold-based
+                        Drift detector
+                      properties:
+                        showAll:
+                          type: boolean
+                        threshold:
+                          type: string
+                      required:
+                      - threshold
+                      type: object
+                    wasserstein:
+                      description: ThresholdBasedDriftSpec defines a threshold-based
+                        Drift detector
+                      properties:
+                        showAll:
+                          type: boolean
+                        threshold:
+                          type: string
+                      required:
+                      - threshold
+                      type: object
+                  type: object
+                outliers:
+                  description: OutlierSpec defines an Outlier detector
+                  properties:
+                    descriptive:
+                      items:
                         type: string
-                    required:
-                    - kafka
-                    - pipe
-                    type: object
-                  type: array
-                source:
-                  description: SourceSpec defines the configuration of the source
-                    for the Monitoring job
+                      type: array
+                  type: object
+                stats:
+                  description: StatSpec defines a Statistic
+                  properties:
+                    avg:
+                      description: AvgSpec defines an Avg
+                      type: object
+                    corr:
+                      description: CorrSpec defines a Correlation
+                      properties:
+                        type:
+                          enum:
+                          - sample
+                          - population
+                          type: string
+                      type: object
+                    count:
+                      description: CountSpec defines a Count stat
+                      type: object
+                    cov:
+                      description: CovSpec defines a Covariance
+                      properties:
+                        type:
+                          enum:
+                          - sample
+                          - population
+                          type: string
+                      type: object
+                    distr:
+                      description: DistrSpec defines a Distribution
+                      properties:
+                        binning:
+                          description: Binning defines the Distribution binning algorithm
+                          enum:
+                          - sturge
+                          type: string
+                        bounds:
+                          additionalProperties:
+                            items:
+                              type: string
+                            type: array
+                          type: object
+                      type: object
+                    max:
+                      description: MaxSpec defines a Max stat
+                      type: object
+                    mean:
+                      description: MeanSpec defines a Mean
+                      type: object
+                    min:
+                      description: MinSpec defines a Min stat
+                      type: object
+                    perc:
+                      description: PercSpec defines Percentiles
+                      properties:
+                        iqr:
+                          type: boolean
+                        percentiles:
+                          items:
+                            type: string
+                          type: array
+                      required:
+                      - percentiles
+                      type: object
+                    pow2Sum:
+                      description: Pow2SumSpec defines a Pow2Sum stat
+                      type: object
+                    stddev:
+                      description: StddevSpec defines a Standard deviation
+                      properties:
+                        type:
+                          enum:
+                          - sample
+                          - population
+                          type: string
+                      type: object
+                    sum:
+                      description: SumSpec defines a Sum stat
+                      type: object
+                  type: object
+                trigger:
+                  description: TriggerSpec defines the Monitoring trigger setting
+                  properties:
+                    window:
+                      description: WindowSpec defines a Window as Monitoring job trigger
+                      properties:
+                        duration:
+                          type: integer
+                        slide:
+                          type: integer
+                        watermarkDelay:
+                          type: integer
+                      required:
+                      - duration
+                      - slide
+                      - watermarkDelay
+                      type: object
+                  required:
+                  - window
+                  type: object
+              required:
+              - stats
+              - trigger
+              type: object
+            storage:
+              description: StorageSpec defines the Storage settings
+              properties:
+                analysis:
+                  description: AnalysisSpec defines the Analysis storage
+                  properties:
+                    drift:
+                      description: SinkSpec defines the configuration of a Sink
+                      properties:
+                        kafka:
+                          description: KafkaSpec defines the KafkaTopic used for inference
+                            logging.
+                          properties:
+                            brokers:
+                              type: string
+                            topic:
+                              description: KafkaTopicSpec defines a Kafka topic
+                              properties:
+                                name:
+                                  type: string
+                                partitions:
+                                  format: int32
+                                  type: integer
+                                replicationFactor:
+                                  type: integer
+                              required:
+                              - name
+                              type: object
+                          required:
+                          - brokers
+                          - topic
+                          type: object
+                      required:
+                      - kafka
+                      type: object
+                    outliers:
+                      description: SinkSpec defines the configuration of a Sink
+                      properties:
+                        kafka:
+                          description: KafkaSpec defines the KafkaTopic used for inference
+                            logging.
+                          properties:
+                            brokers:
+                              type: string
+                            topic:
+                              description: KafkaTopicSpec defines a Kafka topic
+                              properties:
+                                name:
+                                  type: string
+                                partitions:
+                                  format: int32
+                                  type: integer
+                                replicationFactor:
+                                  type: integer
+                              required:
+                              - name
+                              type: object
+                          required:
+                          - brokers
+                          - topic
+                          type: object
+                      required:
+                      - kafka
+                      type: object
+                    stats:
+                      description: SinkSpec defines the configuration of a Sink
+                      properties:
+                        kafka:
+                          description: KafkaSpec defines the KafkaTopic used for inference
+                            logging.
+                          properties:
+                            brokers:
+                              type: string
+                            topic:
+                              description: KafkaTopicSpec defines a Kafka topic
+                              properties:
+                                name:
+                                  type: string
+                                partitions:
+                                  format: int32
+                                  type: integer
+                                replicationFactor:
+                                  type: integer
+                              required:
+                              - name
+                              type: object
+                          required:
+                          - brokers
+                          - topic
+                          type: object
+                      required:
+                      - kafka
+                      type: object
+                  required:
+                  - stats
+                  type: object
+                inference:
+                  description: SinkSpec defines the configuration of a Sink
                   properties:
                     kafka:
                       description: KafkaSpec defines the KafkaTopic used for inference
@@ -121,114 +371,14 @@ spec:
                   required:
                   - kafka
                   type: object
-                timeout:
-                  type: integer
               required:
-              - source
-              type: object
-            model:
-              description: ModelSpec defines the Model being monitored. It should
-                match with KFserving inferenceservice name
-              properties:
-                id:
-                  type: string
-                name:
-                  type: string
-                schemas:
-                  description: ModelSchemasSpec defines the inference schema of a
-                    model
-                  properties:
-                    request:
-                      type: string
-                    response:
-                      type: string
-                  required:
-                  - request
-                  - response
-                  type: object
-                version:
-                  type: integer
-              required:
-              - name
-              - schemas
-              type: object
-            monitoring:
-              description: MonitoringSpec defines the Monitoring settings
-              properties:
-                drift:
-                  items:
-                    description: DriftSpec defines a Drift detector
-                    properties:
-                      name:
-                        type: string
-                      showall:
-                        type: boolean
-                      threshold:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                    required:
-                    - name
-                    type: object
-                  type: array
-                outliers:
-                  items:
-                    description: OutlierSpec defines an Outlier detector
-                    properties:
-                      name:
-                        type: string
-                      params:
-                        additionalProperties:
-                          type: string
-                        type: object
-                    required:
-                    - name
-                    type: object
-                  type: array
-                stats:
-                  items:
-                    description: StatSpec defines a Statistic
-                    properties:
-                      name:
-                        type: string
-                      params:
-                        additionalProperties:
-                          type: string
-                        type: object
-                    required:
-                    - name
-                    type: object
-                  type: array
-                trigger:
-                  description: TriggerSpec defines the Monitoring trigger setting
-                  properties:
-                    window:
-                      description: WindowSpec defines a Window as Monitoring job trigger
-                      properties:
-                        duration:
-                          type: integer
-                        slide:
-                          type: integer
-                        watermarkDelay:
-                          type: integer
-                      required:
-                      - duration
-                      - slide
-                      - watermarkDelay
-                      type: object
-                  required:
-                  - window
-                  type: object
-              required:
-              - stats
-              - trigger
+              - analysis
+              - inference
               type: object
           required:
-          - job
           - model
           - monitoring
+          - storage
           type: object
         status:
           description: ModelMonitorStatus defines the observed state of ModelMonitor

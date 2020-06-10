@@ -41,14 +41,15 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 
 	// Specs
 	metadata := modelMonitor.ObjectMeta
-	modelSpec := &modelMonitor.Spec.Model
-	monitoringSpec := &modelMonitor.Spec.Monitoring
-	jobSpec := &modelMonitor.Spec.Job
+	modelSpec := modelMonitor.Spec.Model
+	monitoringSpec := modelMonitor.Spec.Monitoring
+	storageSpec := modelMonitor.Spec.Storage
+	jobSpec := modelMonitor.Spec.Job
 
 	// Service account
 	serviceAccount := constants.DefaultServiceAccountName(b.Permissions.Assignee)
 
-	// Json
+	// Env vars (json format)
 	modelSpecBytes, err := json.Marshal(modelSpec)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to marshal %v object to %v ", modelSpec, err)
@@ -56,6 +57,10 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 	monitoringSpecBytes, err := json.Marshal(monitoringSpec)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to marshal %v object to %v ", monitoringSpec, err)
+	}
+	storageSpecBytes, err := json.Marshal(storageSpec)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to marshal %v object to %v ", storageSpec, err)
 	}
 	jobSpecBytes, err := json.Marshal(jobSpec)
 	if err != nil {
@@ -107,6 +112,7 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 					EnvVars: map[string]string{
 						constants.MonitoringJobEnvVarModelInfoLabel:        string(modelSpecBytes),
 						constants.MonitoringJobEnvVarMonitoringConfigLabel: string(monitoringSpecBytes),
+						constants.MonitoringJobEnvVarStorageConfigLabel:    string(storageSpecBytes),
 						constants.MonitoringJobEnvVarJobConfigLabel:        string(jobSpecBytes),
 					},
 				},

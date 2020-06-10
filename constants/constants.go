@@ -60,6 +60,7 @@ const (
 	MonitoringJobSparkVersionLabel           = "version"
 	MonitoringJobEnvVarModelInfoLabel        = "MODEL_INFO"
 	MonitoringJobEnvVarMonitoringConfigLabel = "MONITORING_CONFIG"
+	MonitoringJobEnvVarStorageConfigLabel    = "STORAGE_CONFIG"
 	MonitoringJobEnvVarJobConfigLabel        = "JOB_CONFIG"
 )
 

@@ -17,7 +17,6 @@ limitations under the License.
 package v1beta1
 
 import (
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,7 +27,9 @@ type ModelMonitorSpec struct {
 	//+required
 	Monitoring MonitoringSpec `json:"monitoring"`
 	//+required
-	Job JobSpec `json:"job"`
+	Storage StorageSpec `json:"storage"`
+	//+optional
+	Job JobSpec `json:"job,omitempty"`
 	//+optional
 	InferenceLogger InferenceLoggerSpec `json:"inferenceLogger,omitempty"`
 }
@@ -40,7 +41,7 @@ type ModelSpec struct {
 	//+optional
 	ID string `json:"id,omitempty"`
 	//+optional
-	Version int `json:"version,omitempty"`
+	Version *int `json:"version,omitempty"`
 	//+required
 	Schemas ModelSchemasSpec `json:"schemas"`
 }
@@ -51,6 +52,11 @@ type ModelSchemasSpec struct {
 	Request string `json:"request"`
 	//+required
 	Response string `json:"response"`
+
+	//+required
+	Instance string `json:"instance"`
+	//+required
+	Prediction string `json:"prediction"`
 }
 
 // MonitoringSpec defines the Monitoring settings
@@ -58,11 +64,13 @@ type MonitoringSpec struct {
 	//+required
 	Trigger TriggerSpec `json:"trigger"`
 	//+required
-	Stats []StatSpec `json:"stats"`
+	Stats StatSpec `json:"stats"`
 	//+optional
-	Outliers []OutlierSpec `json:"outliers,omitempty"`
+	Baseline *BaselineSpec `json:"baseline,omitempty"`
 	//+optional
-	Drift []DriftSpec `json:"drift,omitempty"`
+	Outliers *OutlierSpec `json:"outliers,omitempty"`
+	//+optional
+	Drift *DriftSpec `json:"drift,omitempty"`
 }
 
 // TriggerSpec defines the Monitoring trigger setting
@@ -83,61 +91,148 @@ type WindowSpec struct {
 
 // StatSpec defines a Statistic
 type StatSpec struct {
-	//+required
-	Name string `json:"name"`
 	//+optional
-	Params map[string]string `json:"params,omitempty"`
+	Max *MaxSpec `json:"max,omitempty"`
+	//+optional
+	Min *MinSpec `json:"min,omitempty"`
+	//+optional
+	Count *CountSpec `json:"count,omitempty"`
+	//+optional
+	Sum *SumSpec `json:"sum,omitempty"`
+	//+optional
+	Pow2Sum *Pow2SumSpec `json:"pow2Sum,omitempty"`
+	//+optional
+	Distr *DistrSpec `json:"distr,omitempty"`
+
+	//+optional
+	Avg *AvgSpec `json:"avg,omitempty"`
+	//+optional
+	Mean *MeanSpec `json:"mean,omitempty"`
+	//+optional
+	Stddev *StddevSpec `json:"stddev,omitempty"`
+	//+optional
+	Perc *PercSpec `json:"perc,omitempty"`
+
+	//+optional
+	Cov *CovSpec `json:"cov,omitempty"`
+	//+optional
+	Corr *CorrSpec `json:"corr,omitempty"`
+}
+
+// MaxSpec defines a Max stat
+type MaxSpec struct{}
+
+// MinSpec defines a Min stat
+type MinSpec struct{}
+
+// CountSpec defines a Count stat
+type CountSpec struct{}
+
+// SumSpec defines a Sum stat
+type SumSpec struct{}
+
+// Pow2SumSpec defines a Pow2Sum stat
+type Pow2SumSpec struct{}
+
+// DistrSpec defines a Distribution
+type DistrSpec struct {
+	//+optional
+	Bounds map[string][]string `json:"bounds,omitempty"`
+	//+optional
+	Binning Binning `json:"binning,omitempty"`
+}
+
+// Binning defines the Distribution binning algorithm
+//+kubebuilder:validation:Enum=sturge
+type Binning string
+
+// AvgSpec defines an Avg
+type AvgSpec struct{}
+
+// MeanSpec defines a Mean
+type MeanSpec struct{}
+
+// StddevSpec defines a Standard deviation
+type StddevSpec struct {
+	//+optional
+	//+kubebuilder:validation:Enum=sample;population
+	Type string `json:"type,omitempty"`
+}
+
+// PercSpec defines Percentiles
+type PercSpec struct {
+	//+required
+	Percentiles []string `json:"percentiles"`
+	//+optional
+	IQR bool `json:"iqr,omitempty"`
+}
+
+// CovSpec defines a Covariance
+type CovSpec struct {
+	//+optional
+	//+kubebuilder:validation:Enum=sample;population
+	Type string `json:"type,omitempty"`
+}
+
+// CorrSpec defines a Correlation
+type CorrSpec struct {
+	//+optional
+	//+kubebuilder:validation:Enum=sample;population
+	Type string `json:"type,omitempty"`
+}
+
+// BaselineSpec defines Baseline stats
+type BaselineSpec struct {
+	//+optional
+	Descriptive string `json:"descriptive,omitempty"`
+	//+optional
+	Distributions string `json:"distributions,omitempty"`
 }
 
 // OutlierSpec defines an Outlier detector
 type OutlierSpec struct {
-	//+required
-	Name string `json:"name"`
 	//+optional
-	Params map[string]string `json:"params,omitempty"`
+	Descriptive []string `json:"descriptive,omitempty"`
 }
 
 // DriftSpec defines a Drift detector
 type DriftSpec struct {
+	//+optional
+	Wasserstein *ThresholdBasedDriftSpec `json:"wasserstein,omitempty"`
+	//+optional
+	KullbackLeibler *ThresholdBasedDriftSpec `json:"kullbackLeibler,omitempty"`
+	//+optional
+	JensenShannon *ThresholdBasedDriftSpec `json:"jensenShannon,omitempty"`
+}
+
+// ThresholdBasedDriftSpec defines a threshold-based Drift detector
+type ThresholdBasedDriftSpec struct {
 	//+required
-	Name string `json:"name"`
+	Threshold string `json:"threshold"`
 	//+optional
-	Threshold resource.Quantity `json:"threshold,omitempty"`
-	//+optional
-	ShowAll bool `json:"showall,omitempty"`
+	ShowAll bool `json:"showAll,omitempty"`
 }
 
-// InferenceLoggerSpec defines the configuration for InferenceLogger Knative Service.
-type InferenceLoggerSpec struct {
-	// +optional
-	MinReplicas int `json:"minReplicas,omitempty"`
-	// +optional
-	MaxReplicas int `json:"maxReplicas,omitempty"`
-	// +optional
-	Parallelism int `json:"parallelism,omitempty"`
-}
-
-//JobSpec defines the configuration for Monitoring job
-type JobSpec struct {
+// StorageSpec defines the Storage settings
+type StorageSpec struct {
 	//+required
-	Source SourceSpec `json:"source"`
-	//+optional
-	Sink []SinkSpec `json:"sink,omitempty"`
-	//+optional
-	Timeout int `json:"timeout,omitempty"`
-}
-
-//SourceSpec defines the configuration of the source for the Monitoring job
-type SourceSpec struct {
+	Inference SinkSpec `json:"inference"`
 	//+required
-	Kafka KafkaSpec `json:"kafka"`
+	Analysis AnalysisSpec `json:"analysis"`
 }
 
-//SinkSpec defines the configuration of the sink for the Monitoring job
+// AnalysisSpec defines the Analysis storage
+type AnalysisSpec struct {
+	//+required
+	Stats SinkSpec `json:"stats"`
+	//+optional
+	Outliers *SinkSpec `json:"outliers,omitempty"`
+	//+optional
+	Drift *SinkSpec `json:"drift,omitempty"`
+}
+
+//SinkSpec defines the configuration of a Sink
 type SinkSpec struct {
-	//+required
-	//+kubebuilder:validation:Enum=stats;outliers;drift
-	Pipe string `json:"pipe"`
 	//+required
 	Kafka KafkaSpec `json:"kafka"`
 }
@@ -155,14 +250,32 @@ type KafkaTopicSpec struct {
 	//+required
 	Name string `json:"name"`
 	//+optional
-	Partitions int32 `json:"partitions"`
+	Partitions int32 `json:"partitions,omitempty"`
 	//+optional
-	ReplicationFactor int16 `json:"replicationFactor"`
+	ReplicationFactor int16 `json:"replicationFactor,omitempty"`
+}
+
+//JobSpec defines the configuration for Monitoring job
+type JobSpec struct {
+	//+optional
+	Timeout int `json:"timeout,omitempty"`
+
+	// TODO: Add Driver and Executor specs
+}
+
+// InferenceLoggerSpec defines the configuration for InferenceLogger Knative Service.
+type InferenceLoggerSpec struct {
+	// +optional
+	MinReplicas int `json:"minReplicas,omitempty"`
+	// +optional
+	MaxReplicas int `json:"maxReplicas,omitempty"`
+	// +optional
+	Parallelism int `json:"parallelism,omitempty"`
 }
 
 // ModelMonitorStatus defines the observed state of ModelMonitor
 type ModelMonitorStatus struct {
-	// TODO: Add InferenceLogger service name
+	// TODO: Add Model Monitor status
 }
 
 // +kubebuilder:object:root=true

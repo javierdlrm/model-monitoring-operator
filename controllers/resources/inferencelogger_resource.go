@@ -50,9 +50,8 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 
 	// Specs
 	metadata := modelMonitor.ObjectMeta
-	modelSpec := &modelMonitor.Spec.Model
-	inferenceLoggerSpec := &modelMonitor.Spec.InferenceLogger
-	kafkaSpec := &modelMonitor.Spec.Job.Source.Kafka
+	inferenceLoggerSpec := modelMonitor.Spec.InferenceLogger
+	inferenceSpec := modelMonitor.Spec.Storage.Inference
 
 	// Autoscaling annotations
 	annotations, err := b.buildAnnotations(metadata, inferenceLoggerSpec.MinReplicas, inferenceLoggerSpec.MaxReplicas, inferenceLoggerSpec.Parallelism)
@@ -91,19 +90,19 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 									Env: []corev1.EnvVar{
 										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaBrokersLabel,
-											Value: kafkaSpec.Brokers,
+											Value: inferenceSpec.Kafka.Brokers,
 										},
 										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaTopicLabel,
-											Value: constants.DefaultKafkaTopicName(modelSpec.Name),
+											Value: inferenceSpec.Kafka.Topic.Name,
 										},
 										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaTopicPartitionsLabel,
-											Value: typesutils.String32(kafkaSpec.Topic.Partitions),
+											Value: typesutils.String32(inferenceSpec.Kafka.Topic.Partitions),
 										},
 										corev1.EnvVar{
 											Name:  constants.InferenceLoggerEnvKafkaTopicReplicationFactorLabel,
-											Value: typesutils.String16(kafkaSpec.Topic.ReplicationFactor),
+											Value: typesutils.String16(inferenceSpec.Kafka.Topic.ReplicationFactor),
 										},
 									},
 									ReadinessProbe: &corev1.Probe{
