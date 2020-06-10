@@ -20,12 +20,6 @@ import (
 	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
 )
 
-var serviceAnnotationDisallowedList = []string{
-	autoscaling.MinScaleAnnotationKey,
-	autoscaling.MaxScaleAnnotationKey,
-	"kubectl.kubernetes.io/last-applied-configuration",
-}
-
 // InferenceLoggerBuilder defines the builder for InferenceLogger
 type InferenceLoggerBuilder struct {
 	ModelMonitorConfig *monitoringv1beta1.ModelMonitorConfig
@@ -54,13 +48,13 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 	inferenceSpec := modelMonitor.Spec.Storage.Inference
 
 	// Autoscaling annotations
-	annotations, err := b.buildAnnotations(metadata, inferenceLoggerSpec.MinReplicas, inferenceLoggerSpec.MaxReplicas, inferenceLoggerSpec.Parallelism)
+	annotations, err := b.buildAnnotations(metadata, inferenceLoggerSpec)
 	if err != nil {
 		return nil, err
 	}
 
-	// Concurrency
-	concurrency := int64(inferenceLoggerSpec.Parallelism)
+	// Concurrency (scaling hard limit, default 0 means limitless)
+	concurrency := int64(inferenceLoggerSpec.Target)
 
 	// Knative Service
 	service := &knservingv1.Service{
@@ -125,33 +119,72 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 	return service, nil
 }
 
-func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, minReplicas int, maxReplicas int, parallelism int) (map[string]string, error) {
+func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, spec monitoringv1beta1.InferenceLoggerSpec) (map[string]string, error) {
 
-	annotations := utils.Filter(metadata.Annotations, func(key string) bool {
-		return !utils.Includes(serviceAnnotationDisallowedList, key)
-	})
+	annotations := metadata.Annotations
 
-	if minReplicas == 0 {
+	// Autoscaler
+	if spec.Autoscaler == "" {
+		annotations[autoscaling.ClassAnnotationKey] = constants.InferenceLoggerDefaultScalingClass
+	} else {
+		annotations[autoscaling.ClassAnnotationKey] = string(spec.Autoscaler)
+	}
+
+	// Metric
+	if spec.Metric == "" {
+		annotations[autoscaling.MetricAnnotationKey] = constants.InferenceLoggerDefaultScalingMetric
+	} else {
+		annotations[autoscaling.MetricAnnotationKey] = string(spec.Metric)
+	}
+
+	// Target
+	if spec.Target != 0 {
+		annotations[autoscaling.TargetAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultScalingTarget)
+	} else {
+		annotations[autoscaling.TargetAnnotationKey] = strconv.Itoa(spec.Target)
+	}
+
+	// Target utilization
+	if spec.TargetUtilization == 0 {
+		annotations[autoscaling.TargetUtilizationPercentageKey] = fmt.Sprint(constants.InferenceLoggerDefaultTargetUtilizationPercentage)
+	} else {
+		annotations[autoscaling.TargetUtilizationPercentageKey] = strconv.Itoa(spec.TargetUtilization)
+	}
+
+	// Window
+	if spec.Window == "" {
+		annotations[autoscaling.WindowAnnotationKey] = constants.InferenceLoggerDefaultWindow
+	} else {
+		annotations[autoscaling.WindowAnnotationKey] = spec.Window
+	}
+
+	// Panic window
+	if spec.PanicWindow == 0 {
+		annotations[autoscaling.PanicWindowPercentageAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultPanicWindow)
+	} else {
+		annotations[autoscaling.PanicWindowPercentageAnnotationKey] = strconv.Itoa(spec.PanicWindow)
+	}
+
+	// Panic threshold
+	if spec.PanicThreshold == 0 {
+		annotations[autoscaling.PanicThresholdPercentageAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultPanicThreshold)
+	} else {
+		annotations[autoscaling.PanicThresholdPercentageAnnotationKey] = strconv.Itoa(spec.PanicThreshold)
+	}
+
+	// Min replicas
+	if spec.MinReplicas == 0 {
 		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMinReplicas)
-	} else if minReplicas != 0 {
-		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(minReplicas)
+	} else {
+		annotations[autoscaling.MinScaleAnnotationKey] = strconv.Itoa(spec.MinReplicas)
 	}
 
-	if maxReplicas != 0 {
-		annotations[autoscaling.MaxScaleAnnotationKey] = fmt.Sprint(maxReplicas)
+	// Max replicas
+	if spec.MaxReplicas == 0 {
+		annotations[autoscaling.MaxScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMaxReplicas)
+	} else {
+		annotations[autoscaling.MaxScaleAnnotationKey] = strconv.Itoa(spec.MaxReplicas)
 	}
 
-	// User can pass down scaling target annotation to overwrite the target default 1
-	if _, ok := annotations[autoscaling.TargetAnnotationKey]; !ok {
-		if parallelism == 0 {
-			annotations[autoscaling.TargetAnnotationKey] = constants.InferenceLoggerDefaultScalingTarget
-		} else {
-			annotations[autoscaling.TargetAnnotationKey] = strconv.Itoa(parallelism)
-		}
-	}
-	// User can pass down scaling class annotation to overwrite the default scaling KPA
-	if _, ok := annotations[autoscaling.ClassAnnotationKey]; !ok {
-		annotations[autoscaling.ClassAnnotationKey] = autoscaling.KPA
-	}
 	return annotations, nil
 }

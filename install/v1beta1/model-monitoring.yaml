@@ -47,12 +47,33 @@ spec:
               description: InferenceLoggerSpec defines the configuration for InferenceLogger
                 Knative Service.
               properties:
+                autoscaler:
+                  description: Autoscaler defines the autoscaler class
+                  enum:
+                  - kpa.autoscaling.knative.dev
+                  - hpa.autoscaling.knative.dev
+                  type: string
                 maxReplicas:
                   type: integer
+                metric:
+                  description: AutoscalerMetric defines the metric for the autoscaler
+                  enum:
+                  - concurrency
+                  - rps
+                  - cpu
+                  type: string
                 minReplicas:
                   type: integer
-                parallelism:
+                panicThreshold:
                   type: integer
+                panicWindow:
+                  type: integer
+                target:
+                  type: integer
+                targetUtilization:
+                  type: integer
+                window:
+                  type: string
               type: object
             job:
               description: JobSpec defines the configuration for Monitoring job

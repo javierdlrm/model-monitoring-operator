@@ -2,6 +2,7 @@ package constants
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	"knative.dev/serving/pkg/apis/autoscaling"
 )
 
 // ModelMonitoring Operator constants
@@ -48,9 +49,16 @@ const (
 
 // InferenceLogger defaults
 var (
-	InferenceLoggerDefaultTimeout       int64 = 300
-	InferenceLoggerDefaultScalingTarget       = "1"
-	InferenceLoggerDefaultMinReplicas         = 1
+	InferenceLoggerDefaultTimeout                     int64 = 300
+	InferenceLoggerDefaultScalingClass                      = autoscaling.KPA // kpa or hpa
+	InferenceLoggerDefaultScalingMetric                     = "concurrency"   // concurrency, rps or cpu (hpa required)
+	InferenceLoggerDefaultScalingTarget                     = 100
+	InferenceLoggerDefaultTargetUtilizationPercentage       = 70
+	InferenceLoggerDefaultMinReplicas                       = 1
+	InferenceLoggerDefaultMaxReplicas                       = 0 // 0 means limitless
+	InferenceLoggerDefaultWindow                            = "60s"
+	InferenceLoggerDefaultPanicWindow                       = 10 // percentage of StableWindow
+	InferenceLoggerDefaultPanicThreshold                    = 200
 )
 
 // Job constants

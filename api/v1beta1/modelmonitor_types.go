@@ -265,13 +265,33 @@ type JobSpec struct {
 
 // InferenceLoggerSpec defines the configuration for InferenceLogger Knative Service.
 type InferenceLoggerSpec struct {
-	// +optional
+	//+optional
+	Autoscaler Autoscaler `json:"autoscaler,omitempty"`
+	//+optional
+	Metric AutoscalerMetric `json:"metric,omitempty"`
+	//+optional
+	Window string `json:"window,omitempty"`
+	//+optional
+	PanicWindow int `json:"panicWindow,omitempty"`
+	//+optional
+	PanicThreshold int `json:"panicThreshold,omitempty"`
+	//+optional
 	MinReplicas int `json:"minReplicas,omitempty"`
-	// +optional
+	//+optional
 	MaxReplicas int `json:"maxReplicas,omitempty"`
-	// +optional
-	Parallelism int `json:"parallelism,omitempty"`
+	//+optional
+	Target int `json:"target,omitempty"`
+	//+optional
+	TargetUtilization int `json:"targetUtilization,omitempty"`
 }
+
+// Autoscaler defines the autoscaler class
+//+kubebuilder:validation:Enum=kpa.autoscaling.knative.dev;hpa.autoscaling.knative.dev
+type Autoscaler string
+
+// AutoscalerMetric defines the metric for the autoscaler
+//+kubebuilder:validation:Enum=concurrency;rps;cpu
+type AutoscalerMetric string
 
 // ModelMonitorStatus defines the observed state of ModelMonitor
 type ModelMonitorStatus struct {
