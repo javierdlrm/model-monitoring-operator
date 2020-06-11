@@ -259,6 +259,8 @@ type KafkaTopicSpec struct {
 type JobSpec struct {
 	//+optional
 	Timeout int `json:"timeout,omitempty"`
+	//+optional
+	ExposeMetrics bool `json:"exposeMetrics,omitempty"`
 
 	// TODO: Add Driver and Executor specs
 }

@@ -78,6 +78,8 @@ spec:
             job:
               description: JobSpec defines the configuration for Monitoring job
               properties:
+                exposeMetrics:
+                  type: boolean
                 timeout:
                   type: integer
               type: object

@@ -20,6 +20,19 @@ import (
 	knservingv1 "knative.dev/serving/pkg/apis/serving/v1"
 )
 
+var customizableServiceAnnotations = []string{
+	autoscaling.MinScaleAnnotationKey,
+	autoscaling.MaxScaleAnnotationKey,
+	autoscaling.ClassAnnotationKey,
+	autoscaling.MetricAnnotationKey,
+	autoscaling.TargetAnnotationKey,
+	autoscaling.TargetUtilizationPercentageKey,
+	autoscaling.WindowAnnotationKey,
+	autoscaling.PanicWindowPercentageAnnotationKey,
+	autoscaling.PanicThresholdPercentageAnnotationKey,
+	"kubectl.kubernetes.io/last-applied-configuration",
+}
+
 // InferenceLoggerBuilder defines the builder for InferenceLogger
 type InferenceLoggerBuilder struct {
 	ModelMonitorConfig *monitoringv1beta1.ModelMonitorConfig
@@ -121,7 +134,9 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 
 func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, spec monitoringv1beta1.InferenceLoggerSpec) (map[string]string, error) {
 
-	annotations := metadata.Annotations
+	annotations := utils.Filter(metadata.Annotations, func(key string) bool {
+		return !utils.Includes(customizableServiceAnnotations, key)
+	})
 
 	// Autoscaler
 	if spec.Autoscaler == "" {
@@ -138,7 +153,7 @@ func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, sp
 	}
 
 	// Target
-	if spec.Target != 0 {
+	if spec.Target == 0 {
 		annotations[autoscaling.TargetAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultScalingTarget)
 	} else {
 		annotations[autoscaling.TargetAnnotationKey] = strconv.Itoa(spec.Target)

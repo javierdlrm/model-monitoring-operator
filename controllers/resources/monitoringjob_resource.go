@@ -135,5 +135,17 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 		},
 	}
 
+	// Metrics
+	if jobSpec.ExposeMetrics {
+		sparkApp.Spec.Monitoring = &sparkv1beta2.MonitoringSpec{
+			ExposeDriverMetrics:   constants.MonitoringJobPrometheusExportDriverMetrics,
+			ExposeExecutorMetrics: constants.MonitoringJobPrometheusExportExecutorMetrics,
+			Prometheus: &sparkv1beta2.PrometheusSpec{
+				JmxExporterJar: constants.MonitoringJobPrometheusJmxExporterJar,
+				Port:           &constants.MonitoringJobPrometheusPort,
+			},
+		}
+	}
+
 	return sparkApp, nil
 }

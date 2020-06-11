@@ -12,7 +12,7 @@ spec:
       request: '{ "type": "struct", "fields": [ { "metadata": {}, "name": "instances", "nullable": true, "type": { "containsNull": true, "elementType": { "containsNull": true, "elementType": "double", "type": "array" }, "type": "array" } } ] }'
       instance: '{ "type": "struct", "fields": [ { "name": "sepal_length", "type": "double", "nullable": true, "metadata": {} }, { "name": "sepal_width", "type": "double", "nullable": true, "metadata": {} }, { "name": "petal_length", "type": "double", "nullable": true, "metadata": {} }, { "name": "petal_width", "type": "double", "nullable": true, "metadata": {} } ] }'
       response: '{ "type": "struct", "fields": [ { "metadata": {}, "name": "predictions", "nullable": true, "type": { "containsNull": true, "elementType": { "containsNull": true, "elementType": "double", "type": "array" }, "type": "array" } } ] }'
-      prediction: '{}'
+      prediction: "{}"
   monitoring:
     trigger:
       window:
@@ -65,7 +65,7 @@ spec:
   storage:
     inference:
       kafka:
-        brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+        brokers: 172.31.12.186:9092,172.31.27.125:9092,172.31.33.255:9092
         topic:
           name: iris-inference-topic
           partitions: 3
@@ -73,18 +73,19 @@ spec:
     analysis:
       stats:
         kafka:
-          brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+          brokers: 172.31.12.186:9092,172.31.27.125:9092,172.31.33.255:9092
           topic:
             name: iris-inference-stats-topic
       outliers:
         kafka:
-          brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+          brokers: 172.31.12.186:9092,172.31.27.125:9092,172.31.33.255:9092
           topic:
             name: iris-inference-outliers-topic
       drift:
         kafka:
-          brokers: 172.31.0.12:9092,172.31.25.169:9092,172.31.39.254:9092
+          brokers: 172.31.12.186:9092,172.31.27.125:9092,172.31.33.255:9092
           topic:
             name: iris-inference-drift-topic
   job:
     timeout: 180
+    exposeMetrics: true

@@ -95,6 +95,11 @@ var (
 	// VolumeMount
 	MonitoringJobVolumeMountName = "test-volume"
 	MonitoringJobVolumeMountPath = "/tmp"
+	// Monitoring
+	MonitoringJobPrometheusExportDriverMetrics         = true
+	MonitoringJobPrometheusExportExecutorMetrics       = true
+	MonitoringJobPrometheusJmxExporterJar              = "/prometheus/jmx_prometheus_javaagent-0.11.0.jar"
+	MonitoringJobPrometheusPort                  int32 = 8090
 )
 
 // KafkaTopic constants
