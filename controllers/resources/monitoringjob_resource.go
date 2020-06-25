@@ -44,7 +44,7 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 	modelSpec := modelMonitor.Spec.Model
 	monitoringSpec := modelMonitor.Spec.Monitoring
 	storageSpec := modelMonitor.Spec.Storage
-	jobSpec := modelMonitor.Spec.Job
+	jobSpec := b.fillDriverAndExecutorResources(modelMonitor.Spec.Job)
 
 	// Service account
 	serviceAccount := constants.DefaultServiceAccountName(b.Permissions.Assignee)
@@ -98,9 +98,9 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 			},
 			Driver: sparkv1beta2.DriverSpec{
 				SparkPodSpec: sparkv1beta2.SparkPodSpec{
-					Cores:          &constants.MonitoringJobDriverCores,
-					CoreLimit:      &constants.MonitoringJobDriverCoreLimit,
-					Memory:         &constants.MonitoringJobDriverMemory,
+					Cores:          &jobSpec.Driver.Cores,
+					CoreLimit:      &jobSpec.Driver.CoreLimit,
+					Memory:         &jobSpec.Driver.Memory,
 					Labels:         map[string]string{constants.MonitoringJobSparkVersionLabel: constants.MonitoringJobSparkVersion},
 					ServiceAccount: &serviceAccount,
 					VolumeMounts: []corev1.VolumeMount{
@@ -119,9 +119,9 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 			},
 			Executor: sparkv1beta2.ExecutorSpec{
 				SparkPodSpec: sparkv1beta2.SparkPodSpec{
-					Cores:     &constants.MonitoringJobExecutorCores,
-					CoreLimit: &constants.MonitoringJobExecutorCoreLimit,
-					Memory:    &constants.MonitoringJobExecutorMemory,
+					Cores:     &jobSpec.Executor.Cores,
+					CoreLimit: &jobSpec.Executor.CoreLimit,
+					Memory:    &jobSpec.Executor.Memory,
 					Labels:    map[string]string{constants.MonitoringJobSparkVersionLabel: constants.MonitoringJobSparkVersion},
 					VolumeMounts: []corev1.VolumeMount{
 						{
@@ -130,7 +130,7 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 						},
 					},
 				},
-				Instances: &constants.MonitoringJobExecutorInstances,
+				Instances: &jobSpec.Executor.Instances,
 			},
 		},
 	}
@@ -148,4 +148,34 @@ func (b *MonitoringJobBuilder) CreateMonitoringJobSparkApp(monitoringJobName str
 	}
 
 	return sparkApp, nil
+}
+
+func (b *MonitoringJobBuilder) fillDriverAndExecutorResources(job monitoringv1beta1.JobSpec) monitoringv1beta1.JobSpec {
+
+	// Driver
+	if job.Driver.Cores == 0 {
+		job.Driver.Cores = constants.MonitoringJobDriverCores
+	}
+	if job.Driver.CoreLimit == "" {
+		job.Driver.CoreLimit = constants.MonitoringJobDriverCoreLimit
+	}
+	if job.Driver.Memory == "" {
+		job.Driver.Memory = constants.MonitoringJobDriverMemory
+	}
+
+	// Executor
+	if job.Executor.Cores == 0 {
+		job.Executor.Cores = constants.MonitoringJobExecutorCores
+	}
+	if job.Executor.CoreLimit == "" {
+		job.Executor.CoreLimit = constants.MonitoringJobExecutorCoreLimit
+	}
+	if job.Executor.Memory == "" {
+		job.Executor.Memory = constants.MonitoringJobExecutorMemory
+	}
+	if job.Executor.Instances == 0 {
+		job.Executor.Instances = constants.MonitoringJobExecutorInstances
+	}
+
+	return job
 }

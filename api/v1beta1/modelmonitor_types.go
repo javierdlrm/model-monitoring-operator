@@ -255,14 +255,40 @@ type KafkaTopicSpec struct {
 	ReplicationFactor int16 `json:"replicationFactor,omitempty"`
 }
 
-//JobSpec defines the configuration for Monitoring job
+// JobSpec defines the configuration for Monitoring job
 type JobSpec struct {
 	//+optional
 	Timeout int `json:"timeout,omitempty"`
 	//+optional
 	ExposeMetrics bool `json:"exposeMetrics,omitempty"`
+	//+optional
+	Driver DriverSpec `json:"driver,omitempty"`
+	//+optional
+	Executor ExecutorSpec `json:"executor,omitempty"`
+}
 
-	// TODO: Add Driver and Executor specs
+// ResourcesSpec defines resources configuration
+type ResourcesSpec struct {
+	//+optional
+	Cores int32 `json:"cores,omitempty"`
+	//+optional
+	CoreLimit string `json:"coreLimit,omitempty"`
+	//+optional
+	Memory string `json:"memory,omitempty"`
+
+	// TODO: Check resource.Quantity instead of string
+}
+
+// DriverSpec defines the configuration for Monitoring Job drivers
+type DriverSpec struct {
+	ResourcesSpec `json:",inline"`
+}
+
+// ExecutorSpec defines the configuration for Monitoring Job executors
+type ExecutorSpec struct {
+	ResourcesSpec `json:",inline"`
+	//+optional
+	Instances int32 `json:"instances"`
 }
 
 // InferenceLoggerSpec defines the configuration for InferenceLogger Knative Service.

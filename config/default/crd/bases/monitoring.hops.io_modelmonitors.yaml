@@ -73,6 +73,33 @@ spec:
             job:
               description: JobSpec defines the configuration for Monitoring job
               properties:
+                driver:
+                  description: DriverSpec defines the configuration for Monitoring
+                    Job drivers
+                  properties:
+                    coreLimit:
+                      type: string
+                    cores:
+                      format: int32
+                      type: integer
+                    memory:
+                      type: string
+                  type: object
+                executor:
+                  description: ExecutorSpec defines the configuration for Monitoring
+                    Job executors
+                  properties:
+                    coreLimit:
+                      type: string
+                    cores:
+                      format: int32
+                      type: integer
+                    instances:
+                      format: int32
+                      type: integer
+                    memory:
+                      type: string
+                  type: object
                 exposeMetrics:
                   type: boolean
                 timeout:

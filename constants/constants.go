@@ -72,6 +72,7 @@ const (
 	MonitoringJobEnvVarJobConfigLabel        = "JOB_CONFIG"
 )
 
+// TODO: Add Driver and Executor variables to api
 // Job template & defaults
 var (
 	// Permissions
