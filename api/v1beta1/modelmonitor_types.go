@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -300,17 +301,19 @@ type InferenceLoggerSpec struct {
 	//+optional
 	Window string `json:"window,omitempty"`
 	//+optional
-	PanicWindow int `json:"panicWindow,omitempty"`
+	PanicWindow string `json:"panicWindow,omitempty"`
 	//+optional
-	PanicThreshold int `json:"panicThreshold,omitempty"`
+	PanicThreshold string `json:"panicThreshold,omitempty"`
 	//+optional
-	MinReplicas int `json:"minReplicas,omitempty"`
+	MinScale int `json:"minScale,omitempty"`
 	//+optional
-	MaxReplicas int `json:"maxReplicas,omitempty"`
+	MaxScale int `json:"maxScale,omitempty"`
 	//+optional
 	Target int `json:"target,omitempty"`
 	//+optional
-	TargetUtilization int `json:"targetUtilization,omitempty"`
+	TargetUtilization string `json:"targetUtilization,omitempty"`
+	//+optional
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // Autoscaler defines the autoscaler class

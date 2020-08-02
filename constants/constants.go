@@ -49,16 +49,18 @@ const (
 
 // InferenceLogger defaults
 var (
+	InferenceLoggerDefaultCPU                               = "0.1"
+	InferenceLoggerDefaultMemory                            = "128Mi"
 	InferenceLoggerDefaultTimeout                     int64 = 300
 	InferenceLoggerDefaultScalingClass                      = autoscaling.KPA // kpa or hpa
 	InferenceLoggerDefaultScalingMetric                     = "concurrency"   // concurrency, rps or cpu (hpa required)
 	InferenceLoggerDefaultScalingTarget                     = 100
-	InferenceLoggerDefaultTargetUtilizationPercentage       = 70
-	InferenceLoggerDefaultMinReplicas                       = 1
-	InferenceLoggerDefaultMaxReplicas                       = 0 // 0 means limitless
+	InferenceLoggerDefaultTargetUtilizationPercentage       = "70"
+	InferenceLoggerDefaultMinScale                          = 1 // 0 if scale-to-zero is desired
+	InferenceLoggerDefaultMaxScale                          = 0 // 0 means limitless
 	InferenceLoggerDefaultWindow                            = "60s"
-	InferenceLoggerDefaultPanicWindow                       = 10 // percentage of StableWindow
-	InferenceLoggerDefaultPanicThreshold                    = 200
+	InferenceLoggerDefaultPanicWindow                       = "10" // percentage of StableWindow
+	InferenceLoggerDefaultPanicThreshold                    = "200"
 )
 
 // Job constants

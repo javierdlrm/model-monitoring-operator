@@ -13,6 +13,7 @@ import (
 	"github.com/go-logr/logr"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -62,6 +63,12 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 
 	// Autoscaling annotations
 	annotations, err := b.buildAnnotations(metadata, inferenceLoggerSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	// Resources
+	resources, err := b.buildResources(metadata, inferenceLoggerSpec)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +127,7 @@ func (b *InferenceLoggerBuilder) CreateInferenceLoggerService(serviceName string
 										},
 										SuccessThreshold: 1,
 									},
+									Resources: resources,
 								},
 							},
 						},
@@ -160,10 +168,10 @@ func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, sp
 	}
 
 	// Target utilization
-	if spec.TargetUtilization == 0 {
-		annotations[autoscaling.TargetUtilizationPercentageKey] = fmt.Sprint(constants.InferenceLoggerDefaultTargetUtilizationPercentage)
+	if spec.TargetUtilization == "" {
+		annotations[autoscaling.TargetUtilizationPercentageKey] = constants.InferenceLoggerDefaultTargetUtilizationPercentage
 	} else {
-		annotations[autoscaling.TargetUtilizationPercentageKey] = strconv.Itoa(spec.TargetUtilization)
+		annotations[autoscaling.TargetUtilizationPercentageKey] = spec.TargetUtilization
 	}
 
 	// Window
@@ -174,32 +182,62 @@ func (b *InferenceLoggerBuilder) buildAnnotations(metadata metav1.ObjectMeta, sp
 	}
 
 	// Panic window
-	if spec.PanicWindow == 0 {
-		annotations[autoscaling.PanicWindowPercentageAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultPanicWindow)
+	if spec.PanicWindow == "" {
+		annotations[autoscaling.PanicWindowPercentageAnnotationKey] = constants.InferenceLoggerDefaultPanicWindow
 	} else {
-		annotations[autoscaling.PanicWindowPercentageAnnotationKey] = strconv.Itoa(spec.PanicWindow)
+		annotations[autoscaling.PanicWindowPercentageAnnotationKey] = spec.PanicWindow
 	}
 
 	// Panic threshold
-	if spec.PanicThreshold == 0 {
-		annotations[autoscaling.PanicThresholdPercentageAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultPanicThreshold)
+	if spec.PanicThreshold == "" {
+		annotations[autoscaling.PanicThresholdPercentageAnnotationKey] = constants.InferenceLoggerDefaultPanicThreshold
 	} else {
-		annotations[autoscaling.PanicThresholdPercentageAnnotationKey] = strconv.Itoa(spec.PanicThreshold)
+		annotations[autoscaling.PanicThresholdPercentageAnnotationKey] = spec.PanicThreshold
 	}
 
 	// Min replicas
-	if spec.MinReplicas == 0 {
-		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMinReplicas)
+	if spec.MinScale == 0 {
+		annotations[autoscaling.MinScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMinScale)
 	} else {
-		annotations[autoscaling.MinScaleAnnotationKey] = strconv.Itoa(spec.MinReplicas)
+		annotations[autoscaling.MinScaleAnnotationKey] = strconv.Itoa(spec.MinScale)
 	}
 
 	// Max replicas
-	if spec.MaxReplicas == 0 {
-		annotations[autoscaling.MaxScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMaxReplicas)
+	if spec.MaxScale == 0 {
+		annotations[autoscaling.MaxScaleAnnotationKey] = fmt.Sprint(constants.InferenceLoggerDefaultMaxScale)
 	} else {
-		annotations[autoscaling.MaxScaleAnnotationKey] = strconv.Itoa(spec.MaxReplicas)
+		annotations[autoscaling.MaxScaleAnnotationKey] = strconv.Itoa(spec.MaxScale)
 	}
 
 	return annotations, nil
+}
+
+func (b *InferenceLoggerBuilder) buildResources(metadata metav1.ObjectMeta, spec monitoringv1beta1.InferenceLoggerSpec) (corev1.ResourceRequirements, error) {
+
+	defaultResources := corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse(constants.InferenceLoggerDefaultCPU),
+		corev1.ResourceMemory: resource.MustParse(constants.InferenceLoggerDefaultMemory),
+	}
+
+	if spec.Resources.Requests == nil {
+		spec.Resources.Requests = defaultResources
+	} else {
+		for name, value := range defaultResources {
+			if _, ok := spec.Resources.Requests[name]; !ok {
+				spec.Resources.Requests[name] = value
+			}
+		}
+	}
+
+	if spec.Resources.Limits == nil {
+		spec.Resources.Limits = defaultResources
+	} else {
+		for name, value := range defaultResources {
+			if _, ok := spec.Resources.Limits[name]; !ok {
+				spec.Resources.Limits[name] = value
+			}
+		}
+	}
+
+	return spec.Resources, nil
 }

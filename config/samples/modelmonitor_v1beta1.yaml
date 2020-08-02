@@ -39,7 +39,7 @@ spec:
       descriptive:
         - max
         - min
-        - stddev
+        - mean
     drift:
       wasserstein:
         threshold: "2.7"
@@ -98,3 +98,11 @@ spec:
       coreLimit: "1000m"
       memory: "512m"
       instances: 1
+  inferenceLogger:
+    resources:
+      requests:
+        cpu: 0.1
+        memory: "128Mi"
+      limits:
+        cpu: 0.1
+        memory: "128Mi"
